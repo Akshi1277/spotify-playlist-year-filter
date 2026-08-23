@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Spotify Playlist Filter — Era & Release Year Engine</title>
+  <title>Spotify Playlist Filter — Era Engine & Decade Splitter</title>
+  <meta name="description" content="Connect Spotify to isolate custom era windows, split massive playlists by decade in one click, view chronological analytics, and generate downloadable story cards.">
   <link rel="manifest" href="./manifest.json">
-  <meta name="theme-color" content="#0a0d14">
+  <meta name="theme-color" content="#07090e">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -13,129 +14,412 @@
 </head>
 <body class="bg-dark text-light">
 
-  <!-- Floating Ambient Glow Background -->
+  <!-- Ambient Light Orbs -->
   <div class="ambient-glow glow-1"></div>
   <div class="ambient-glow glow-2"></div>
 
-  <!-- Main App Shell -->
+  <!-- Main Container -->
   <div id="app" class="app-container">
     
-    <!-- Top Navigation Header -->
-    <header class="app-header">
+    <!-- Top Floating Island Header -->
+    <header class="app-header glass-bezel">
       <div class="header-brand">
         <div class="logo-icon">
-          <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
             <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.494 17.308c-.216.353-.674.467-1.027.251-2.812-1.718-6.35-2.107-10.518-1.154-.403.092-.803-.16-.895-.563-.092-.403.16-.803.563-.895 4.567-1.043 8.484-.6 11.626 1.334.353.216.467.674.251 1.027zm1.467-3.26c-.272.441-.852.58-1.293.308-3.22-1.979-8.128-2.551-11.936-1.394-.497.151-1.028-.133-1.179-.63-.151-.497.133-1.028.63-1.179 4.354-1.321 9.775-.68 13.47 1.592.441.272.58.852.308 1.293zm.126-3.41c-3.86-2.293-10.224-2.505-13.889-1.392-.593.18-1.226-.157-1.406-.75-.18-.593.157-1.226.75-1.406 4.215-1.28 11.242-1.033 15.688 1.605.534.317.708 1.01.391 1.544-.317.534-1.01.708-1.544.399z"/>
           </svg>
         </div>
-        <div class="brand-text">
-          <span class="brand-title">Spotify Playlist Filter</span>
-        </div>
+        <span class="brand-title">Spotify Playlist Filter</span>
       </div>
 
-      <!-- User Profile / Auth Status -->
+      <!-- Landing Navigation Links (When logged out) -->
+      <nav id="landingNav" class="landing-nav">
+        <a href="#features" class="nav-link">Features</a>
+        <a href="#how-it-works" class="nav-link">How It Works</a>
+        <a href="#faq" class="nav-link">FAQ</a>
+      </nav>
+
+      <!-- User Profile / Auth Status Container -->
       <div id="authStatusContainer" class="auth-status-container">
-        <!-- Injected via JS -->
+        <a href="#connect" class="btn btn-primary btn-pill btn-sm">
+          <span>Connect Spotify</span>
+          <div class="btn-icon-circle">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </div>
+        </a>
       </div>
     </header>
 
-    <!-- SECTION 1: Connect Spotify Account (Shown when not authenticated) -->
-    <section id="authSection" class="card auth-card glass-panel">
-      <div class="auth-card-content">
-        <h1 class="hero-heading">Filter Playlists by <span class="highlight-gradient">Release Year</span></h1>
-        <p class="hero-subtext">
-          Scan any Spotify playlist, isolate custom era brackets, view chronological analytics, and batch-split decades with one click.
-        </p>
+    <!-- SECTION 1: PUBLIC LANDING PAGE (Shown when unauthenticated) -->
+    <div id="authSection" class="landing-page">
+      
+      <!-- HERO SECTION -->
+      <section class="hero-section">
+        <div class="hero-content">
+          <div class="eyebrow-badge">
+            <span class="eyebrow-dot"></span>
+            <span>ERA DISCOVERY & PLAYLIST SUITE</span>
+          </div>
 
-        <div class="setup-guide-box">
-          <h3>Quick Setup</h3>
-          <div class="step-list">
-            <div class="step-item">
-              <span class="step-num">1</span>
-              <span>In your Spotify Developer app, set the Redirect URI to:</span>
-              <code id="currentRedirectUri" class="code-badge">https://spotify-playlist-year-filter.vercel.app/</code>
-              <button id="copyUriBtn" class="btn-sm btn-ghost" title="Copy URI">Copy</button>
+          <h1 class="hero-title">
+            Curate and Relive Music Across <span class="text-gradient">Decades</span>.
+          </h1>
+
+          <p class="hero-lead">
+            Connect your Spotify library to isolate custom era windows, split massive playlists by decade in one click, view chronological analytics, and generate story cards.
+          </p>
+
+          <div class="hero-cta-group">
+            <a href="#connect" class="btn btn-primary btn-pill btn-lg btn-glow">
+              <span>Launch Filter Engine</span>
+              <div class="btn-icon-circle">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </div>
+            </a>
+            <a href="#features" class="btn btn-secondary btn-pill btn-lg">
+              <span>Explore Features</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Interactive Hero Product Mockup -->
+        <div class="hero-mockup-wrapper double-bezel">
+          <div class="mockup-inner-core">
+            <div class="mockup-header-bar">
+              <div class="mockup-dots">
+                <span></span><span></span><span></span>
+              </div>
+              <div class="mockup-url-pill">
+                <span>spotify-playlist-year-filter.vercel.app</span>
+              </div>
+              <div class="mockup-live-badge">LIVE ENGINE</div>
             </div>
-            <div class="step-item">
-              <span class="step-num">2</span>
-              <span>Enter your Spotify <strong>Client ID</strong>:</span>
+
+            <div class="mockup-content-preview">
+              <div class="mockup-filter-preview">
+                <div class="preview-metric-row">
+                  <div class="preview-badge">Window: 1990 to 2010</div>
+                  <div class="preview-badge highlight">240 tracks matched</div>
+                </div>
+                <div class="mockup-slider-track">
+                  <div class="mockup-slider-fill"></div>
+                  <div class="mockup-thumb thumb-left"></div>
+                  <div class="mockup-thumb thumb-right"></div>
+                </div>
+              </div>
+
+              <div class="mockup-chart-bars">
+                <div class="bar-col"><div class="bar-fill" style="height: 15%"></div><span>70s</span></div>
+                <div class="bar-col"><div class="bar-fill" style="height: 35%"></div><span>80s</span></div>
+                <div class="bar-col active"><div class="bar-fill" style="height: 85%"></div><span>90s</span></div>
+                <div class="bar-col active"><div class="bar-fill" style="height: 100%"></div><span>00s</span></div>
+                <div class="bar-col"><div class="bar-fill" style="height: 60%"></div><span>10s</span></div>
+                <div class="bar-col"><div class="bar-fill" style="height: 25%"></div><span>20s</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: BENTO FEATURE GRID -->
+      <section id="features" class="section-container">
+        <div class="section-heading-box">
+          <div class="eyebrow-badge">
+            <span>CORE CAPABILITIES</span>
+          </div>
+          <h2 class="section-title">Engineered for Music Collectors</h2>
+          <p class="section-subtitle">A precision toolset designed to organize, analyze, and transform massive playlists.</p>
+        </div>
+
+        <div class="bento-grid">
+          
+          <!-- Bento Card 1: Dual Range Slider (Large) -->
+          <div class="bento-card bento-col-8 double-bezel">
+            <div class="bento-inner">
+              <div class="bento-icon-wrapper">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
+              </div>
+              <h3 class="bento-title">Dual-Range Era Window Slider</h3>
+              <p class="bento-desc">
+                Set custom minimum and maximum release years to isolate specific memory brackets (such as 2005 to 2012 for peak college nostalgia or 1990 to 1999 for pure 90s hits).
+              </p>
+              <div class="bento-chip-preview">
+                <span class="preview-chip">Pre-2015 Classics</span>
+                <span class="preview-chip">2000s Nostalgia</span>
+                <span class="preview-chip">Pure 90s</span>
+                <span class="preview-chip">Golden Era</span>
+              </div>
             </div>
           </div>
 
-          <form id="loginForm" class="client-id-form">
-            <div class="input-wrapper">
-              <input 
-                type="text" 
-                id="clientIdInput" 
-                placeholder="Enter your Spotify Client ID..." 
-                required 
-                autocomplete="off"
-                spellcheck="false"
-              />
+          <!-- Bento Card 2: 1-Click Decade Splitter -->
+          <div class="bento-card bento-col-4 double-bezel">
+            <div class="bento-inner">
+              <div class="bento-icon-wrapper">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+              </div>
+              <h3 class="bento-title">1-Click Decade Splitter</h3>
+              <p class="bento-desc">
+                Scan a 500+ track master library and automatically generate separate 80s, 90s, 2000s, 2010s, and 2020s playlists in a single batch.
+              </p>
             </div>
-            <button type="submit" id="connectBtn" class="btn btn-primary btn-glow">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.494 17.308c-.216.353-.674.467-1.027.251-2.812-1.718-6.35-2.107-10.518-1.154-.403.092-.803-.16-.895-.563-.092-.403.16-.803.563-.895 4.567-1.043 8.484-.6 11.626 1.334.353.216.467.674.251 1.027zm1.467-3.26c-.272.441-.852.58-1.293.308-3.22-1.979-8.128-2.551-11.936-1.394-.497.151-1.028-.133-1.179-.63-.151-.497.133-1.028.63-1.179 4.354-1.321 9.775-.68 13.47 1.592.441.272.58.852.308 1.293zm.126-3.41c-3.86-2.293-10.224-2.505-13.889-1.392-.593.18-1.226-.157-1.406-.75-.18-.593.157-1.226.75-1.406 4.215-1.28 11.242-1.033 15.688 1.605.534.317.708 1.01.391 1.544-.317.534-1.01.708-1.544.399z"/></svg>
-              Connect with Spotify
-            </button>
-          </form>
+          </div>
+
+          <!-- Bento Card 3: Timeline Era Analytics -->
+          <div class="bento-card bento-col-4 double-bezel">
+            <div class="bento-inner">
+              <div class="bento-icon-wrapper">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+              </div>
+              <h3 class="bento-title">Timeline Distribution Analytics</h3>
+              <p class="bento-desc">
+                Visual Canvas chart plotting the exact chronological spread of songs across musical decades with interactive click-to-filter support.
+              </p>
+            </div>
+          </div>
+
+          <!-- Bento Card 4: Story Cards (Large) -->
+          <div class="bento-card bento-col-8 double-bezel">
+            <div class="bento-inner">
+              <div class="bento-icon-wrapper">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
+              </div>
+              <h3 class="bento-title">Downloadable Story Cards (Instagram & Twitter)</h3>
+              <p class="bento-desc">
+                Generate a high-resolution 1080x1920 graphic summarizing your playlist DNA: vintage percentage breakdown, oldest classic tracks found, and one-click PNG download.
+              </p>
+              <div class="bento-stats-preview">
+                <div class="bento-stat-pill"><span>2000s Nostalgia</span><strong>58%</strong></div>
+                <div class="bento-stat-pill"><span>90s Golden Era</span><strong>28%</strong></div>
+                <div class="bento-stat-pill"><span>Modern Hits</span><strong>14%</strong></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- SECTION: HOW IT WORKS -->
+      <section id="how-it-works" class="section-container">
+        <div class="section-heading-box">
+          <div class="eyebrow-badge">
+            <span>WORKFLOW</span>
+          </div>
+          <h2 class="section-title">How It Works</h2>
+          <p class="section-subtitle">Three straightforward steps to transform your playlist library.</p>
         </div>
 
-        <div class="auth-security-note">
-          Direct Spotify connection. We never store, collect, or share your personal playlist data or credentials.
-        </div>
-      </div>
-    </section>
+        <div class="steps-grid">
+          <div class="step-card double-bezel">
+            <div class="step-inner">
+              <div class="step-index">01</div>
+              <h3 class="step-title">Connect Account</h3>
+              <p class="step-desc">
+                Authorize directly with Spotify via PKCE OAuth. No client secret is required and zero login credentials are ever stored.
+              </p>
+            </div>
+          </div>
 
-    <!-- SECTION 2: Main Workspace (Shown when authenticated) -->
+          <div class="step-card double-bezel">
+            <div class="step-inner">
+              <div class="step-index">02</div>
+              <h3 class="step-title">Isolate Era Window</h3>
+              <p class="step-desc">
+                Select any playlist from your account. The engine scans all album release dates and filters tracks according to your slider window.
+              </p>
+            </div>
+          </div>
+
+          <div class="step-card double-bezel">
+            <div class="step-inner">
+              <div class="step-index">03</div>
+              <h3 class="step-title">Export & Enjoy</h3>
+              <p class="step-desc">
+                Create new curated playlists directly in your Spotify library with optional custom vinyl-groove cover art.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: PRIVACY & ARCHITECTURE -->
+      <section class="section-container">
+        <div class="privacy-card double-bezel">
+          <div class="privacy-inner">
+            <div class="privacy-left">
+              <div class="eyebrow-badge">
+                <span>SECURITY GUARANTEE</span>
+              </div>
+              <h2 class="privacy-title">Built with 100% Client-Side Privacy</h2>
+              <p class="privacy-desc">
+                All playlist scanning, track sorting, chart plotting, and story card generation occurs directly in your local browser session. We never collect, store, or transmit your personal data or playlist contents.
+              </p>
+            </div>
+            <div class="privacy-badges-grid">
+              <div class="privacy-badge-item">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                <span>PKCE OAuth Flow</span>
+              </div>
+              <div class="privacy-badge-item">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                <span>Zero Server Logging</span>
+              </div>
+              <div class="privacy-badge-item">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
+                <span>0ms IndexedDB Cache</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: FAQ ACCORDION -->
+      <section id="faq" class="section-container">
+        <div class="section-heading-box">
+          <div class="eyebrow-badge">
+            <span>FREQUENTLY ASKED QUESTIONS</span>
+          </div>
+          <h2 class="section-title">Common Questions</h2>
+        </div>
+
+        <div class="faq-list">
+          <div class="faq-item double-bezel">
+            <div class="faq-inner">
+              <button class="faq-question">
+                <span>Will my private playlists show up?</span>
+                <svg class="faq-chevron" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </button>
+              <div class="faq-answer">
+                <p>Yes. The app requests private playlist reading permissions, allowing you to filter and export both public and private playlists created by your account.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="faq-item double-bezel">
+            <div class="faq-inner">
+              <button class="faq-question">
+                <span>Can I filter large playlists with over 1,000 tracks?</span>
+                <svg class="faq-chevron" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </button>
+              <div class="faq-answer">
+                <p>Yes. The engine implements automated pagination to scan and process playlists of any size (200, 500, or 2,000+ songs) smoothly.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="faq-item double-bezel">
+            <div class="faq-inner">
+              <button class="faq-question">
+                <span>How does the release year detection work?</span>
+                <svg class="faq-chevron" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </button>
+              <div class="faq-answer">
+                <p>The engine inspects Spotify album metadata and applies intelligent extraction to accurately capture original release dates, even for compilation albums and movie soundtracks.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION: CONNECT WITH SPOTIFY STATION -->
+      <section id="connect" class="section-container connect-station-section">
+        <div class="connect-card double-bezel">
+          <div class="connect-inner">
+            <div class="eyebrow-badge">
+              <span>GET STARTED</span>
+            </div>
+            <h2 class="connect-title">Connect Your Account</h2>
+            <p class="connect-lead">Enter your Spotify Client ID to start filtering and curating playlists.</p>
+
+            <div class="setup-steps-strip">
+              <div class="setup-step-pill">
+                <span class="step-pill-num">1</span>
+                <span>Set Redirect URI in Spotify Dashboard:</span>
+                <code id="currentRedirectUri" class="code-badge">https://spotify-playlist-year-filter.vercel.app/</code>
+                <button id="copyUriBtn" class="btn-sm btn-ghost">Copy</button>
+              </div>
+            </div>
+
+            <form id="loginForm" class="connect-form">
+              <div class="input-wrapper">
+                <input 
+                  type="text" 
+                  id="clientIdInput" 
+                  placeholder="Paste your Spotify Client ID..." 
+                  required 
+                  autocomplete="off"
+                  spellcheck="false"
+                />
+              </div>
+              <button type="submit" id="connectBtn" class="btn btn-primary btn-pill btn-lg btn-glow">
+                <span>Connect with Spotify</span>
+                <div class="btn-icon-circle">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.494 17.308c-.216.353-.674.467-1.027.251-2.812-1.718-6.35-2.107-10.518-1.154-.403.092-.803-.16-.895-.563-.092-.403.16-.803.563-.895 4.567-1.043 8.484-.6 11.626 1.334.353.216.467.674.251 1.027zm1.467-3.26c-.272.441-.852.58-1.293.308-3.22-1.979-8.128-2.551-11.936-1.394-.497.151-1.028-.133-1.179-.63-.151-.497.133-1.028.63-1.179 4.354-1.321 9.775-.68 13.47 1.592.441.272.58.852.308 1.293zm.126-3.41c-3.86-2.293-10.224-2.505-13.889-1.392-.593.18-1.226-.157-1.406-.75-.18-.593.157-1.226.75-1.406 4.215-1.28 11.242-1.033 15.688 1.605.534.317.708 1.01.391 1.544-.317.534-1.01.708-1.544.399z"/></svg>
+                </div>
+              </button>
+            </form>
+
+            <div class="connect-footnote">
+              Free setup. Follows official Spotify PKCE specifications.
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- SECTION 2: AUTHENTICATED WORKSPACE (Shown when logged in) -->
     <main id="mainWorkspace" class="main-workspace hidden">
 
       <!-- Step 1: Select Playlist -->
-      <section class="card glass-panel playlist-selector-card">
-        <div class="card-header-row">
-          <div>
-            <h2 class="card-title">Select Source Playlist</h2>
-            <p class="card-subtitle">Choose a playlist created by your account or paste your playlist link</p>
+      <section class="card double-bezel playlist-selector-card">
+        <div class="bezel-inner">
+          <div class="card-header-row">
+            <div>
+              <h2 class="card-title">Select Source Playlist</h2>
+              <p class="card-subtitle">Choose a playlist created by your account or paste your playlist link</p>
+            </div>
+            <button id="refreshPlaylistsBtn" class="btn-sm btn-ghost" title="Refresh library playlists">
+              Refresh
+            </button>
           </div>
-          <button id="refreshPlaylistsBtn" class="btn-sm btn-ghost" title="Refresh library playlists">
-            Refresh
-          </button>
-        </div>
 
-        <div class="playlist-inputs-grid">
-          <!-- Dropdown of User Playlists -->
-          <div class="input-group">
-            <label for="playlistSelect">Playlists Created by You</label>
-            <div class="select-wrapper">
-              <select id="playlistSelect">
-                <option value="">-- Choose a playlist created by you --</option>
-              </select>
+          <div class="playlist-inputs-grid">
+            <!-- Dropdown of User Playlists -->
+            <div class="input-group">
+              <label for="playlistSelect">Playlists Created by You</label>
+              <div class="select-wrapper">
+                <select id="playlistSelect">
+                  <option value="">-- Choose a playlist created by you --</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="divider-or"><span>OR</span></div>
+
+            <!-- Direct URL / ID Input -->
+            <div class="input-group">
+              <label for="playlistUrlInput">Paste Playlist Link</label>
+              <div class="url-input-row">
+                <input 
+                  type="text" 
+                  id="playlistUrlInput" 
+                  placeholder="https://open.spotify.com/playlist/..." 
+                />
+                <button id="loadUrlBtn" class="btn btn-secondary">Load</button>
+              </div>
             </div>
           </div>
 
-          <div class="divider-or"><span>OR</span></div>
-
-          <!-- Direct URL / ID Input -->
-          <div class="input-group">
-            <label for="playlistUrlInput">Paste Playlist Link</label>
-            <div class="url-input-row">
-              <input 
-                type="text" 
-                id="playlistUrlInput" 
-                placeholder="https://open.spotify.com/playlist/..." 
-              />
-              <button id="loadUrlBtn" class="btn btn-secondary">Load</button>
+          <!-- Progress Loading Indicator -->
+          <div id="loadingProgressContainer" class="loading-container hidden">
+            <div class="loading-header">
+              <span id="loadingStatusText">Loading tracks...</span>
+              <span id="loadingPercentText">0%</span>
             </div>
-          </div>
-        </div>
-
-        <!-- Progress Loading Indicator -->
-        <div id="loadingProgressContainer" class="loading-container hidden">
-          <div class="loading-header">
-            <span id="loadingStatusText">Loading tracks...</span>
-            <span id="loadingPercentText">0%</span>
-          </div>
-          <div class="progress-bar-bg">
-            <div id="loadingProgressBar" class="progress-bar-fill" style="width: 0%"></div>
+            <div class="progress-bar-bg">
+              <div id="loadingProgressBar" class="progress-bar-fill" style="width: 0%"></div>
+            </div>
           </div>
         </div>
       </section>
@@ -144,194 +428,204 @@
       <div id="filterWorkspace" class="filter-workspace hidden">
         
         <!-- Playlist Banner Card & Power Actions -->
-        <div class="card glass-panel playlist-hero-banner">
-          <div class="banner-left">
-            <img id="bannerPlaylistImg" class="playlist-cover-art" src="" alt="Playlist Cover" />
-            <div class="banner-details">
-              <span class="badge badge-spotify">Active Playlist</span>
-              <h2 id="bannerPlaylistTitle" class="banner-title">Playlist Title</h2>
-              <p id="bannerPlaylistDesc" class="banner-desc">Description</p>
-              <div class="banner-meta">
-                <span id="bannerTotalCount">0 tracks</span>
-                <span class="meta-dot">•</span>
-                <span id="bannerOwner">Owner</span>
+        <div class="card double-bezel playlist-hero-banner">
+          <div class="bezel-inner banner-inner-layout">
+            <div class="banner-left">
+              <img id="bannerPlaylistImg" class="playlist-cover-art" src="" alt="Playlist Cover" />
+              <div class="banner-details">
+                <span class="badge badge-spotify">Active Playlist</span>
+                <h2 id="bannerPlaylistTitle" class="banner-title">Playlist Title</h2>
+                <p id="bannerPlaylistDesc" class="banner-desc">Description</p>
+                <div class="banner-meta">
+                  <span id="bannerTotalCount">0 tracks</span>
+                  <span class="meta-dot">•</span>
+                  <span id="bannerOwner">Owner</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <!-- Power Tool Buttons -->
-          <div class="banner-power-actions">
-            <button id="openDecadeSplitterBtn" class="btn btn-secondary btn-sm" title="Split into 90s, 2000s, 2010s in 1 click">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-              Decade Splitter
-            </button>
-            <button id="openSocialCardBtn" class="btn btn-secondary btn-sm" title="Generate Story Card graphic">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
-              Share Story Card
-            </button>
+            <!-- Power Tool Buttons -->
+            <div class="banner-power-actions">
+              <button id="openDecadeSplitterBtn" class="btn btn-secondary btn-sm" title="Split into 90s, 2000s, 2010s in 1 click">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                Decade Splitter
+              </button>
+              <button id="openSocialCardBtn" class="btn btn-secondary btn-sm" title="Generate Story Card graphic">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
+                Share Story Card
+              </button>
+            </div>
           </div>
         </div>
 
         <!-- Interactive Timeline Decade Chart Card -->
-        <section class="card glass-panel timeline-chart-card">
-          <div class="chart-header">
-            <div>
-              <h3 class="chart-title">Playlist Era Distribution</h3>
-              <p class="chart-subtitle">Chronological spread across musical decades</p>
+        <section class="card double-bezel timeline-chart-card">
+          <div class="bezel-inner">
+            <div class="chart-header">
+              <div>
+                <h3 class="chart-title">Playlist Era Distribution</h3>
+                <p class="chart-subtitle">Click any decade bar to filter tracks instantly</p>
+              </div>
             </div>
-          </div>
-          <div class="canvas-container">
-            <canvas id="timelineChartCanvas"></canvas>
+            <div class="canvas-container">
+              <canvas id="timelineChartCanvas"></canvas>
+            </div>
           </div>
         </section>
 
         <!-- Filter Control Station with Dual-Range Slider -->
-        <section class="card glass-panel filter-station-card">
-          <div class="filter-top-row">
-            <div class="filter-heading-group">
-              <h2 class="card-title">Filter by Release Year Window</h2>
-              <p class="card-subtitle">Set your minimum and maximum release years to isolate specific era brackets.</p>
-            </div>
-
-            <!-- Era Quick Presets -->
-            <div class="era-presets">
-              <button class="preset-chip active" data-min="1960" data-max="2015">Pre-2015 Classics (&le; 2015)</button>
-              <button class="preset-chip" data-min="2000" data-max="2009">2000s Nostalgia (2000-2009)</button>
-              <button class="preset-chip" data-min="1990" data-max="1999">Pure 90s (1990-1999)</button>
-              <button class="preset-chip" data-min="1960" data-max="2000">Golden Era (&le; 2000)</button>
-              <button class="preset-chip" data-min="1960" data-max="2026" data-all="true">All Tracks</button>
-            </div>
-          </div>
-
-          <!-- Dual-Thumb Range Slider Box -->
-          <div class="dual-range-box">
-            <div class="range-values-display">
-              <div class="range-val-badge">
-                <span>From Year:</span>
-                <strong id="displayMinYear">1960</strong>
+        <section class="card double-bezel filter-station-card">
+          <div class="bezel-inner">
+            <div class="filter-top-row">
+              <div class="filter-heading-group">
+                <h2 class="card-title">Filter by Release Year Window</h2>
+                <p class="card-subtitle">Set your minimum and maximum release years to isolate specific era brackets.</p>
               </div>
-              <div class="range-val-separator">➔</div>
-              <div class="range-val-badge">
-                <span>To Year:</span>
-                <strong id="displayMaxYear">2015</strong>
-              </div>
-              <div class="active-range-summary" id="activeRangeSummary">
-                Window: 1960 to 2015
+
+              <!-- Era Quick Presets -->
+              <div class="era-presets">
+                <button class="preset-chip active" data-min="1960" data-max="2015">Pre-2015 Classics (&le; 2015)</button>
+                <button class="preset-chip" data-min="2000" data-max="2009">2000s Nostalgia (2000-2009)</button>
+                <button class="preset-chip" data-min="1990" data-max="1999">Pure 90s (1990-1999)</button>
+                <button class="preset-chip" data-min="1960" data-max="2000">Golden Era (&le; 2000)</button>
+                <button class="preset-chip" data-min="1960" data-max="2026" data-all="true">All Tracks</button>
               </div>
             </div>
 
-            <div class="dual-slider-wrapper">
-              <div class="dual-slider-track" id="dualSliderHighlight"></div>
-              <input 
-                type="range" 
-                id="minYearSlider" 
-                min="1960" 
-                max="2026" 
-                value="1960" 
-                step="1"
-                class="range-thumb thumb-min"
-              />
-              <input 
-                type="range" 
-                id="maxYearSlider" 
-                min="1960" 
-                max="2026" 
-                value="2015" 
-                step="1"
-                class="range-thumb thumb-max"
-              />
-            </div>
-          </div>
-
-          <!-- Filter Live Summary Stats -->
-          <div class="filter-stats-bar">
-            <div class="stat-pill stat-included">
-              <span class="indicator-dot dot-green"></span>
-              <span id="statIncludedCount">0</span> included
-            </div>
-            <div class="stat-pill stat-excluded">
-              <span class="indicator-dot dot-muted"></span>
-              <span id="statExcludedCount">0</span> excluded
-            </div>
-            <div class="stat-pill stat-total">
-              <span class="indicator-dot dot-blue"></span>
-              <span id="statTotalCount">0</span> total tracks
-            </div>
-          </div>
-
-          <!-- Search & Filter Subbar -->
-          <div class="filter-subbar">
-            <div class="search-input-wrapper">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-              </svg>
-              <input type="text" id="trackSearchInput" placeholder="Search track, artist, or album..." />
-            </div>
-
-            <div class="filter-controls-right">
-              <!-- View Filter -->
-              <div class="view-filter-group">
-                <button id="showIncludedOnlyBtn" class="toggle-btn active">Included Only</button>
-                <button id="showAllTracksBtn" class="toggle-btn">All Tracks</button>
+            <!-- Dual-Thumb Range Slider Box -->
+            <div class="dual-range-box">
+              <div class="range-values-display">
+                <div class="range-val-badge">
+                  <span>From:</span>
+                  <strong id="displayMinYear">1960</strong>
+                </div>
+                <div class="range-val-separator">➔</div>
+                <div class="range-val-badge">
+                  <span>To:</span>
+                  <strong id="displayMaxYear">2015</strong>
+                </div>
+                <div class="active-range-summary" id="activeRangeSummary">
+                  Window: 1960 to 2015
+                </div>
               </div>
 
-              <!-- Sorting -->
-              <select id="trackSortSelect" class="sort-select">
-                <option value="original">Original Order</option>
-                <option value="year-asc">Year: Oldest First</option>
-                <option value="year-desc">Year: Newest First</option>
-                <option value="title-asc">Title: A to Z</option>
-                <option value="artist-asc">Artist: A to Z</option>
-              </select>
+              <div class="dual-slider-wrapper">
+                <div class="dual-slider-track" id="dualSliderHighlight"></div>
+                <input 
+                  type="range" 
+                  id="minYearSlider" 
+                  min="1960" 
+                  max="2026" 
+                  value="1960" 
+                  step="1"
+                  class="range-thumb thumb-min"
+                />
+                <input 
+                  type="range" 
+                  id="maxYearSlider" 
+                  min="1960" 
+                  max="2026" 
+                  value="2015" 
+                  step="1"
+                  class="range-thumb thumb-max"
+                />
+              </div>
+            </div>
 
-              <!-- Quick Selection Actions -->
-              <button id="selectAllBtn" class="btn-sm btn-ghost">Select All</button>
-              <button id="deselectAllBtn" class="btn-sm btn-ghost">Deselect All</button>
-              <button id="resetOverridesBtn" class="btn-sm btn-ghost">Reset</button>
+            <!-- Filter Live Summary Stats -->
+            <div class="filter-stats-bar">
+              <div class="stat-pill stat-included">
+                <span class="indicator-dot dot-green"></span>
+                <span id="statIncludedCount">0</span> included
+              </div>
+              <div class="stat-pill stat-excluded">
+                <span class="indicator-dot dot-muted"></span>
+                <span id="statExcludedCount">0</span> excluded
+              </div>
+              <div class="stat-pill stat-total">
+                <span class="indicator-dot dot-blue"></span>
+                <span id="statTotalCount">0</span> total tracks
+              </div>
+            </div>
+
+            <!-- Search & Filter Subbar -->
+            <div class="filter-subbar">
+              <div class="search-input-wrapper">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" id="trackSearchInput" placeholder="Search track, artist, or album..." />
+              </div>
+
+              <div class="filter-controls-right">
+                <!-- View Filter -->
+                <div class="view-filter-group">
+                  <button id="showIncludedOnlyBtn" class="toggle-btn active">Included Only</button>
+                  <button id="showAllTracksBtn" class="toggle-btn">All Tracks</button>
+                </div>
+
+                <!-- Sorting -->
+                <select id="trackSortSelect" class="sort-select">
+                  <option value="original">Original Order</option>
+                  <option value="year-asc">Year: Oldest First</option>
+                  <option value="year-desc">Year: Newest First</option>
+                  <option value="title-asc">Title: A to Z</option>
+                  <option value="artist-asc">Artist: A to Z</option>
+                </select>
+
+                <!-- Quick Selection Actions -->
+                <button id="selectAllBtn" class="btn-sm btn-ghost">Select All</button>
+                <button id="deselectAllBtn" class="btn-sm btn-ghost">Deselect All</button>
+                <button id="resetOverridesBtn" class="btn-sm btn-ghost">Reset</button>
+              </div>
             </div>
           </div>
         </section>
 
         <!-- Step 3: Tracks Table & Review List -->
-        <section class="card glass-panel tracks-list-card">
-          <div class="tracks-list-header">
-            <div class="col-check">
-              <input type="checkbox" id="headerMasterCheckbox" checked title="Select/Deselect all visible" />
+        <section class="card double-bezel tracks-list-card">
+          <div class="bezel-inner">
+            <div class="tracks-list-header">
+              <div class="col-check">
+                <input type="checkbox" id="headerMasterCheckbox" checked title="Select/Deselect all visible" />
+              </div>
+              <div class="col-num">#</div>
+              <div class="col-art"></div>
+              <div class="col-title">Title & Artist</div>
+              <div class="col-album">Album</div>
+              <div class="col-year">Year</div>
+              <div class="col-status">Status</div>
+              <div class="col-preview">Preview</div>
             </div>
-            <div class="col-num">#</div>
-            <div class="col-art"></div>
-            <div class="col-title">Title & Artist</div>
-            <div class="col-album">Album</div>
-            <div class="col-year">Year</div>
-            <div class="col-status">Status</div>
-            <div class="col-preview">Preview</div>
-          </div>
 
-          <div id="tracksTableBody" class="tracks-table-body">
-            <!-- Dynamic Song Rows Injected via JS -->
-          </div>
+            <div id="tracksTableBody" class="tracks-table-body">
+              <!-- Dynamic Song Rows Injected via JS -->
+            </div>
 
-          <!-- Empty State if no tracks match search -->
-          <div id="noTracksState" class="empty-state hidden">
-            <p>No tracks match your current filter or search criteria.</p>
+            <!-- Empty State if no tracks match search -->
+            <div id="noTracksState" class="empty-state hidden">
+              <p>No tracks match your current filter or search criteria.</p>
+            </div>
           </div>
         </section>
 
         <!-- Sticky Floating Export Bar -->
-        <div class="floating-export-bar glass-panel">
-          <div class="export-summary">
-            <div class="export-count-highlight">
-              <span id="exportTrackCount">0</span> tracks selected
+        <div class="floating-export-bar double-bezel">
+          <div class="floating-inner">
+            <div class="export-summary">
+              <div class="export-count-highlight">
+                <span id="exportTrackCount">0</span> tracks selected
+              </div>
+              <span class="export-hint">Ready to export to your Spotify account</span>
             </div>
-            <span class="export-hint">Ready to export to your Spotify account</span>
-          </div>
 
-          <button id="openExportModalBtn" class="btn btn-primary btn-glow btn-lg">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-            </svg>
-            Export to Spotify Playlist
-          </button>
+            <button id="openExportModalBtn" class="btn btn-primary btn-pill btn-lg btn-glow">
+              <span>Export to Spotify Playlist</span>
+              <div class="btn-icon-circle">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+              </div>
+            </button>
+          </div>
         </div>
 
       </div>
@@ -339,151 +633,159 @@
 
     <!-- EXPORT PLAYLIST MODAL -->
     <div id="exportModal" class="modal-backdrop hidden">
-      <div class="modal-card glass-panel">
-        <div class="modal-header">
-          <h3>Create New Spotify Playlist</h3>
-          <button id="closeModalBtn" class="btn-close">&times;</button>
+      <div class="modal-card double-bezel">
+        <div class="modal-inner">
+          <div class="modal-header">
+            <h3>Create New Spotify Playlist</h3>
+            <button id="closeModalBtn" class="btn-close">&times;</button>
+          </div>
+
+          <form id="exportForm" class="modal-form">
+            <div class="input-group">
+              <label for="exportPlaylistName">Playlist Name</label>
+              <input 
+                type="text" 
+                id="exportPlaylistName" 
+                required 
+                value="Retro Classics (&le; 2015)" 
+              />
+            </div>
+
+            <div class="input-group">
+              <label for="exportPlaylistDesc">Description</label>
+              <textarea 
+                id="exportPlaylistDesc" 
+                rows="3"
+              >Curated collection of tracks released on or before 2015.</textarea>
+            </div>
+
+            <div class="input-row-options">
+              <label class="custom-checkbox-label">
+                <input type="checkbox" id="exportPlaylistPublic" checked />
+                <span>Make playlist Public</span>
+              </label>
+              <label class="custom-checkbox-label">
+                <input type="checkbox" id="generateCoverArtCheck" checked />
+                <span>Generate custom retro cover art</span>
+              </label>
+            </div>
+
+            <div class="modal-stats-card">
+              <div><strong>Tracks to Export:</strong> <span id="modalExportCount">0</span> songs</div>
+              <div><strong>Target Account:</strong> <span id="modalAccountName">Spotify User</span></div>
+            </div>
+
+            <!-- Progress Bar inside modal -->
+            <div id="exportProgressContainer" class="modal-progress-container hidden">
+              <div class="progress-labels">
+                <span id="exportProgressStatus">Creating playlist & adding tracks...</span>
+                <span id="exportProgressPercent">0%</span>
+              </div>
+              <div class="progress-bar-bg">
+                <div id="exportProgressBar" class="progress-bar-fill" style="width: 0%"></div>
+              </div>
+            </div>
+
+            <div class="modal-actions">
+              <button type="button" id="cancelExportBtn" class="btn btn-ghost">Cancel</button>
+              <button type="submit" id="confirmExportBtn" class="btn btn-primary btn-pill btn-glow">
+                <span>Create & Export Playlist</span>
+              </button>
+            </div>
+          </form>
         </div>
-
-        <form id="exportForm" class="modal-form">
-          <div class="input-group">
-            <label for="exportPlaylistName">Playlist Name</label>
-            <input 
-              type="text" 
-              id="exportPlaylistName" 
-              required 
-              value="Retro Classics (&le; 2015)" 
-            />
-          </div>
-
-          <div class="input-group">
-            <label for="exportPlaylistDesc">Description</label>
-            <textarea 
-              id="exportPlaylistDesc" 
-              rows="3"
-            >Curated collection of tracks released on or before 2015.</textarea>
-          </div>
-
-          <div class="input-row-options">
-            <label class="custom-checkbox-label">
-              <input type="checkbox" id="exportPlaylistPublic" checked />
-              <span>Make playlist Public</span>
-            </label>
-            <label class="custom-checkbox-label">
-              <input type="checkbox" id="generateCoverArtCheck" checked />
-              <span>Generate custom retro cover art</span>
-            </label>
-          </div>
-
-          <div class="modal-stats-card">
-            <div><strong>Tracks to Export:</strong> <span id="modalExportCount">0</span> songs</div>
-            <div><strong>Target Account:</strong> <span id="modalAccountName">Spotify User</span></div>
-          </div>
-
-          <!-- Progress Bar inside modal -->
-          <div id="exportProgressContainer" class="modal-progress-container hidden">
-            <div class="progress-labels">
-              <span id="exportProgressStatus">Creating playlist & adding tracks...</span>
-              <span id="exportProgressPercent">0%</span>
-            </div>
-            <div class="progress-bar-bg">
-              <div id="exportProgressBar" class="progress-bar-fill" style="width: 0%"></div>
-            </div>
-          </div>
-
-          <div class="modal-actions">
-            <button type="button" id="cancelExportBtn" class="btn btn-ghost">Cancel</button>
-            <button type="submit" id="confirmExportBtn" class="btn btn-primary btn-glow">
-              Create & Export Playlist
-            </button>
-          </div>
-        </form>
       </div>
     </div>
 
     <!-- DECADE SPLITTER MODAL -->
     <div id="decadeSplitterModal" class="modal-backdrop hidden">
-      <div class="modal-card glass-panel modal-lg">
-        <div class="modal-header">
-          <div>
-            <h3>1-Click Decade Splitter</h3>
-            <p class="modal-subtitle">Automatically segment this playlist into separate era collections</p>
+      <div class="modal-card double-bezel modal-lg">
+        <div class="modal-inner">
+          <div class="modal-header">
+            <div>
+              <h3>1-Click Decade Splitter</h3>
+              <p class="modal-subtitle">Automatically segment this playlist into separate era collections</p>
+            </div>
+            <button id="closeDecadeModalBtn" class="btn-close">&times;</button>
           </div>
-          <button id="closeDecadeModalBtn" class="btn-close">&times;</button>
-        </div>
 
-        <div class="decade-buckets-list" id="decadeBucketsContainer">
-          <!-- Injected via JS -->
-        </div>
-
-        <div id="decadeExportProgressContainer" class="modal-progress-container hidden">
-          <div class="progress-labels">
-            <span id="decadeExportStatus">Generating decade playlists...</span>
-            <span id="decadeExportPercent">0%</span>
+          <div class="decade-buckets-list" id="decadeBucketsContainer">
+            <!-- Injected via JS -->
           </div>
-          <div class="progress-bar-bg">
-            <div id="decadeExportProgressBar" class="progress-bar-fill" style="width: 0%"></div>
-          </div>
-        </div>
 
-        <div class="modal-actions">
-          <button type="button" id="cancelDecadeSplitBtn" class="btn btn-ghost">Cancel</button>
-          <button type="button" id="confirmDecadeSplitBtn" class="btn btn-primary btn-glow">
-            Generate Selected Playlists
-          </button>
+          <div id="decadeExportProgressContainer" class="modal-progress-container hidden">
+            <div class="progress-labels">
+              <span id="decadeExportStatus">Generating decade playlists...</span>
+              <span id="decadeExportPercent">0%</span>
+            </div>
+            <div class="progress-bar-bg">
+              <div id="decadeExportProgressBar" class="progress-bar-fill" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" id="cancelDecadeSplitBtn" class="btn btn-ghost">Cancel</button>
+            <button type="button" id="confirmDecadeSplitBtn" class="btn btn-primary btn-pill btn-glow">
+              <span>Generate Selected Playlists</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- SOCIAL STORY CARD MODAL -->
     <div id="socialCardModal" class="modal-backdrop hidden">
-      <div class="modal-card glass-panel story-modal">
-        <div class="modal-header">
-          <div>
-            <h3>Playlist DNA Story Card</h3>
-            <p class="modal-subtitle">Formatted for Instagram Stories & Twitter sharing</p>
+      <div class="modal-card double-bezel story-modal">
+        <div class="modal-inner">
+          <div class="modal-header">
+            <div>
+              <h3>Playlist DNA Story Card</h3>
+              <p class="modal-subtitle">Formatted for Instagram Stories & Twitter</p>
+            </div>
+            <button id="closeSocialModalBtn" class="btn-close">&times;</button>
           </div>
-          <button id="closeSocialModalBtn" class="btn-close">&times;</button>
-        </div>
 
-        <div class="story-card-preview-box">
-          <img id="storyCardPreviewImg" class="story-preview-img" src="" alt="Story Card Preview" />
-        </div>
+          <div class="story-card-preview-box">
+            <img id="storyCardPreviewImg" class="story-preview-img" src="" alt="Story Card Preview" />
+          </div>
 
-        <div class="modal-actions story-actions">
-          <button type="button" id="downloadStoryCardBtn" class="btn btn-primary btn-glow btn-lg">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-            Download PNG (1080x1920)
-          </button>
-          <button type="button" id="closeStoryModalBtn" class="btn btn-secondary">Close</button>
+          <div class="modal-actions story-actions">
+            <button type="button" id="downloadStoryCardBtn" class="btn btn-primary btn-pill btn-glow btn-lg">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              <span>Download PNG (1080x1920)</span>
+            </button>
+            <button type="button" id="closeStoryModalBtn" class="btn btn-secondary btn-pill">Close</button>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- SUCCESS MODAL -->
     <div id="successModal" class="modal-backdrop hidden">
-      <div class="modal-card glass-panel success-card">
-        <div class="success-icon-badge">
-          <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#1db954" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-            <polyline points="22 4 12 14.01 9 11.01"></polyline>
-          </svg>
-        </div>
-        <h2>Playlist Created Successfully</h2>
-        <p id="successSummaryText">
-          Added <strong>0 songs</strong> to your new Spotify playlist.
-        </p>
+      <div class="modal-card double-bezel success-card">
+        <div class="modal-inner">
+          <div class="success-icon-badge">
+            <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#1db954" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+          </div>
+          <h2>Playlist Created Successfully</h2>
+          <p id="successSummaryText">
+            Added <strong>0 songs</strong> to your new Spotify playlist.
+          </p>
 
-        <div id="createdPlaylistsLinksList" class="created-links-list hidden">
-          <!-- Injected when multiple decade playlists are created -->
-        </div>
+          <div id="createdPlaylistsLinksList" class="created-links-list hidden">
+            <!-- Injected when multiple decade playlists are created -->
+          </div>
 
-        <div class="success-actions">
-          <a id="openInSpotifyBtn" href="#" target="_blank" class="btn btn-primary btn-glow btn-lg">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.494 17.308c-.216.353-.674.467-1.027.251-2.812-1.718-6.35-2.107-10.518-1.154-.403.092-.803-.16-.895-.563-.092-.403.16-.803.563-.895 4.567-1.043 8.484-.6 11.626 1.334.353.216.467.674.251 1.027zm1.467-3.26c-.272.441-.852.58-1.293.308-3.22-1.979-8.128-2.551-11.936-1.394-.497.151-1.028-.133-1.179-.63-.151-.497.133-1.028.63-1.179 4.354-1.321 9.775-.68 13.47 1.592.441.272.58.852.308 1.293zm.126-3.41c-3.86-2.293-10.224-2.505-13.889-1.392-.593.18-1.226-.157-1.406-.75-.18-.593.157-1.226.75-1.406 4.215-1.28 11.242-1.033 15.688 1.605.534.317.708 1.01.391 1.544-.317.534-1.01.708-1.544.399z"/></svg>
-            Open in Spotify
-          </a>
-          <button id="closeSuccessBtn" class="btn btn-secondary">Done</button>
+          <div class="success-actions">
+            <a id="openInSpotifyBtn" href="#" target="_blank" class="btn btn-primary btn-pill btn-glow btn-lg">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.494 17.308c-.216.353-.674.467-1.027.251-2.812-1.718-6.35-2.107-10.518-1.154-.403.092-.803-.16-.895-.563-.092-.403.16-.803.563-.895 4.567-1.043 8.484-.6 11.626 1.334.353.216.467.674.251 1.027zm1.467-3.26c-.272.441-.852.58-1.293.308-3.22-1.979-8.128-2.551-11.936-1.394-.497.151-1.028-.133-1.179-.63-.151-.497.133-1.028.63-1.179 4.354-1.321 9.775-.68 13.47 1.592.441.272.58.852.308 1.293zm.126-3.41c-3.86-2.293-10.224-2.505-13.889-1.392-.593.18-1.226-.157-1.406-.75-.18-.593.157-1.226.75-1.406 4.215-1.28 11.242-1.033 15.688 1.605.534.317.708 1.01.391 1.544-.317.534-1.01.708-1.544.399z"/></svg>
+              <span>Open in Spotify</span>
+            </a>
+            <button id="closeSuccessBtn" class="btn btn-secondary btn-pill">Done</button>
+          </div>
         </div>
       </div>
     </div>
@@ -491,7 +793,7 @@
     <!-- Hidden Audio Player for 30s previews -->
     <audio id="audioPreviewPlayer"></audio>
 
-    <!-- Clean Minimalist Footer -->
+    <!-- Minimalist Footer -->
     <footer class="app-footer">
       <p>Independent playlist management tool. Not affiliated with Spotify AB.</p>
     </footer>

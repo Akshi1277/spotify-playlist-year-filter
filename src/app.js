@@ -200,7 +200,15 @@ async function init() {
 function showAuthSection() {
   elements.authSection.classList.remove('hidden');
   elements.mainWorkspace.classList.add('hidden');
-  elements.authStatusContainer.innerHTML = '';
+  document.getElementById('landingNav')?.classList.remove('hidden');
+  elements.authStatusContainer.innerHTML = `
+    <a href="#connect" class="btn btn-primary btn-pill btn-sm">
+      <span>Connect Spotify</span>
+      <div class="btn-icon-circle">
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </div>
+    </a>
+  `;
 }
 
 async function loadAuthenticatedUser() {
@@ -208,6 +216,7 @@ async function loadAuthenticatedUser() {
     state.user = await fetchCurrentUser(state.token);
     elements.authSection.classList.add('hidden');
     elements.mainWorkspace.classList.remove('hidden');
+    document.getElementById('landingNav')?.classList.add('hidden');
 
     renderUserHeader();
     await loadUserPlaylists();
@@ -544,6 +553,14 @@ function setupEventListeners() {
     } catch (err) {
       alert(`Login failed: ${err.message}`);
     }
+  });
+
+  // FAQ Accordion Toggle
+  document.querySelectorAll('.faq-question').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const item = btn.closest('.faq-item');
+      item.classList.toggle('active');
+    });
   });
 
   // Copy URI button
