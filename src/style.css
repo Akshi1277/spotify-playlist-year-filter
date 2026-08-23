@@ -137,18 +137,34 @@ body {
   gap: 12px;
 }
 
-.logo-icon {
-  color: var(--spotify-green);
+.brand-logo-img {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  box-shadow: 0 0 12px rgba(29, 185, 84, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.brand-text-stack {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
 }
 
 .brand-title {
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 800;
   letter-spacing: -0.02em;
   color: #fff;
+  line-height: 1.2;
+}
+
+.brand-badge-sub {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--spotify-green);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 .landing-nav {
