@@ -1105,3 +1105,10 @@ body {
   padding: 40px 20px;
   color: var(--text-muted);
 }
+
+.app-footer {
+  text-align: center;
+  padding: 40px 20px 80px 20px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}

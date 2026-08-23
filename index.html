@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Spotify Retro Playlist Filter — Filter by Release Year</title>
+  <title>Spotify Playlist Year Filter — Filter by Release Year</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -11,7 +11,7 @@
 </head>
 <body class="bg-dark text-light">
 
-  <!-- Floating Background Ambient Light -->
+  <!-- Floating Background Ambient Glow -->
   <div class="ambient-glow glow-1"></div>
   <div class="ambient-glow glow-2"></div>
 
@@ -27,8 +27,7 @@
           </svg>
         </div>
         <div class="brand-text">
-          <span class="brand-title">Spotify Retro Filter</span>
-          <span class="brand-badge">Release Year Engine</span>
+          <span class="brand-title">Spotify Playlist Filter</span>
         </div>
       </div>
 
@@ -41,24 +40,23 @@
     <!-- SECTION 1: Connect Spotify Account (Shown when not authenticated) -->
     <section id="authSection" class="card auth-card glass-panel">
       <div class="auth-card-content">
-        <div class="auth-badge">Client-Side Utility</div>
         <h1 class="hero-heading">Filter Playlists by <span class="highlight-gradient">Release Year</span></h1>
         <p class="hero-subtext">
-          Scan any Spotify playlist, extract accurate release years, and generate a new <strong>Classics Playlist</strong> with one click.
+          Scan any Spotify playlist, filter songs by their original release date, and create custom era playlists in seconds.
         </p>
 
         <div class="setup-guide-box">
-          <h3>Quick 1-Minute Setup</h3>
+          <h3>Quick Setup</h3>
           <div class="step-list">
             <div class="step-item">
               <span class="step-num">1</span>
-              <span>In Spotify Developer Dashboard, ensure Redirect URI is set to:</span>
+              <span>In your Spotify Developer app, set the Redirect URI to:</span>
               <code id="currentRedirectUri" class="code-badge">https://spotify-playlist-year-filter.vercel.app/</code>
               <button id="copyUriBtn" class="btn-sm btn-ghost" title="Copy URI">Copy</button>
             </div>
             <div class="step-item">
               <span class="step-num">2</span>
-              <span>Paste your Spotify <strong>Client ID</strong> below:</span>
+              <span>Enter your Spotify <strong>Client ID</strong>:</span>
             </div>
           </div>
 
@@ -67,7 +65,7 @@
               <input 
                 type="text" 
                 id="clientIdInput" 
-                placeholder="Paste your 32-character Client ID here..." 
+                placeholder="Enter your Spotify Client ID..." 
                 required 
                 autocomplete="off"
                 spellcheck="false"
@@ -81,7 +79,7 @@
         </div>
 
         <div class="auth-security-note">
-          Security: Uses Spotify PKCE OAuth. No client secrets, no backend server, and zero data leaves your local browser.
+          Direct Spotify connection. We never store, collect, or share your personal playlist data or credentials.
         </div>
       </div>
     </section>
@@ -93,8 +91,8 @@
       <section class="card glass-panel playlist-selector-card">
         <div class="card-header-row">
           <div>
-            <h2 class="card-title">1. Select Source Playlist</h2>
-            <p class="card-subtitle">Choose from your library or paste any public/private playlist link</p>
+            <h2 class="card-title">Select Source Playlist</h2>
+            <p class="card-subtitle">Choose a playlist from your library or paste any Spotify playlist link</p>
           </div>
           <button id="refreshPlaylistsBtn" class="btn-sm btn-ghost" title="Refresh library playlists">
             Refresh
@@ -116,14 +114,14 @@
 
           <!-- Direct URL / ID Input -->
           <div class="input-group">
-            <label for="playlistUrlInput">Paste Spotify Playlist Link or URI</label>
+            <label for="playlistUrlInput">Paste Playlist Link</label>
             <div class="url-input-row">
               <input 
                 type="text" 
                 id="playlistUrlInput" 
-                placeholder="https://open.spotify.com/playlist/... or spotify:playlist:..." 
+                placeholder="https://open.spotify.com/playlist/..." 
               />
-              <button id="loadUrlBtn" class="btn btn-secondary">Load Link</button>
+              <button id="loadUrlBtn" class="btn btn-secondary">Load</button>
             </div>
           </div>
         </div>
@@ -131,7 +129,7 @@
         <!-- Progress Loading Indicator for 200+ tracks -->
         <div id="loadingProgressContainer" class="loading-container hidden">
           <div class="loading-header">
-            <span id="loadingStatusText">Fetching playlist tracks (0/0)...</span>
+            <span id="loadingStatusText">Loading tracks...</span>
             <span id="loadingPercentText">0%</span>
           </div>
           <div class="progress-bar-bg">
@@ -147,7 +145,7 @@
         <div class="card glass-panel playlist-hero-banner">
           <img id="bannerPlaylistImg" class="playlist-cover-art" src="" alt="Playlist Cover" />
           <div class="banner-details">
-            <span class="badge badge-spotify">Active Source</span>
+            <span class="badge badge-spotify">Active Playlist</span>
             <h2 id="bannerPlaylistTitle" class="banner-title">Playlist Title</h2>
             <p id="bannerPlaylistDesc" class="banner-desc">Description</p>
             <div class="banner-meta">
@@ -162,8 +160,8 @@
         <section class="card glass-panel filter-station-card">
           <div class="filter-top-row">
             <div class="filter-heading-group">
-              <h2 class="card-title">2. Filter Songs by Release Year</h2>
-              <p class="card-subtitle">Set your cutoff year. Songs released on or before will be selected automatically.</p>
+              <h2 class="card-title">Filter by Release Year</h2>
+              <p class="card-subtitle">Set your target cutoff year. Songs released on or before will be selected automatically.</p>
             </div>
 
             <!-- Era Quick Presets -->
@@ -178,11 +176,11 @@
           <!-- Dynamic Year Slider -->
           <div class="year-slider-box">
             <div class="slider-labels">
-              <span class="slider-min">Vintage (1960)</span>
+              <span class="slider-min">1960</span>
               <div class="active-year-display">
                 Selected Cutoff: <span id="currentSliderYearValue" class="slider-year-val">&le; 2015</span>
               </div>
-              <span class="slider-max">Recent (2026)</span>
+              <span class="slider-max">2026</span>
             </div>
 
             <div class="range-wrapper">
@@ -202,11 +200,11 @@
           <div class="filter-stats-bar">
             <div class="stat-pill stat-included">
               <span class="indicator-dot dot-green"></span>
-              <span id="statIncludedCount">0</span> tracks included
+              <span id="statIncludedCount">0</span> included
             </div>
             <div class="stat-pill stat-excluded">
               <span class="indicator-dot dot-muted"></span>
-              <span id="statExcludedCount">0</span> tracks excluded (&gt; <span id="statExcludedYear">2015</span>)
+              <span id="statExcludedCount">0</span> excluded (&gt; <span id="statExcludedYear">2015</span>)
             </div>
             <div class="stat-pill stat-total">
               <span class="indicator-dot dot-blue"></span>
@@ -226,15 +224,15 @@
             <div class="filter-controls-right">
               <!-- View Filter -->
               <div class="view-filter-group">
-                <button id="showIncludedOnlyBtn" class="toggle-btn active">Showing: Included Only</button>
-                <button id="showAllTracksBtn" class="toggle-btn">Showing: All Tracks</button>
+                <button id="showIncludedOnlyBtn" class="toggle-btn active">Included Only</button>
+                <button id="showAllTracksBtn" class="toggle-btn">All Tracks</button>
               </div>
 
               <!-- Sorting -->
               <select id="trackSortSelect" class="sort-select">
                 <option value="original">Original Order</option>
-                <option value="year-asc">Release Year: Oldest First</option>
-                <option value="year-desc">Release Year: Newest First</option>
+                <option value="year-asc">Year: Oldest First</option>
+                <option value="year-desc">Year: Newest First</option>
                 <option value="title-asc">Title: A to Z</option>
                 <option value="artist-asc">Artist: A to Z</option>
               </select>
@@ -242,7 +240,7 @@
               <!-- Quick Selection Actions -->
               <button id="selectAllBtn" class="btn-sm btn-ghost">Select All</button>
               <button id="deselectAllBtn" class="btn-sm btn-ghost">Deselect All</button>
-              <button id="resetOverridesBtn" class="btn-sm btn-ghost" title="Reset any manually toggled checkboxes">Reset Toggles</button>
+              <button id="resetOverridesBtn" class="btn-sm btn-ghost">Reset</button>
             </div>
           </div>
         </section>
@@ -254,10 +252,10 @@
               <input type="checkbox" id="headerMasterCheckbox" checked title="Select/Deselect all visible" />
             </div>
             <div class="col-num">#</div>
-            <div class="col-art">Art</div>
+            <div class="col-art">Artwork</div>
             <div class="col-title">Title & Artist</div>
-            <div class="col-album">Album / Soundtrack</div>
-            <div class="col-year">Release Year</div>
+            <div class="col-album">Album</div>
+            <div class="col-year">Year</div>
             <div class="col-status">Status</div>
             <div class="col-preview">Preview</div>
           </div>
@@ -276,9 +274,9 @@
         <div class="floating-export-bar glass-panel">
           <div class="export-summary">
             <div class="export-count-highlight">
-              <span id="exportTrackCount">0</span> songs selected
+              <span id="exportTrackCount">0</span> tracks selected
             </div>
-            <span class="export-hint">Will be added to your new Spotify playlist</span>
+            <span class="export-hint">Ready to export to your Spotify account</span>
           </div>
 
           <button id="openExportModalBtn" class="btn btn-primary btn-glow btn-lg">
@@ -316,7 +314,7 @@
             <textarea 
               id="exportPlaylistDesc" 
               rows="3"
-            >Curated collection of tracks released on or before 2015. Generated with Spotify Playlist Year Filter.</textarea>
+            >Curated collection of tracks released on or before 2015.</textarea>
           </div>
 
           <div class="input-group checkbox-group">
@@ -334,7 +332,7 @@
           <!-- Progress Bar inside modal -->
           <div id="exportProgressContainer" class="modal-progress-container hidden">
             <div class="progress-labels">
-              <span id="exportProgressStatus">Creating playlist & adding songs...</span>
+              <span id="exportProgressStatus">Creating playlist & adding tracks...</span>
               <span id="exportProgressPercent">0%</span>
             </div>
             <div class="progress-bar-bg">
@@ -378,6 +376,11 @@
 
     <!-- Hidden Audio Player for 30s previews -->
     <audio id="audioPreviewPlayer"></audio>
+
+    <!-- Clean Minimalist Footer -->
+    <footer class="app-footer">
+      <p>Independent playlist management tool. Not affiliated with Spotify AB.</p>
+    </footer>
 
   </div>
 
