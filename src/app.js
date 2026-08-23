@@ -205,7 +205,7 @@ function renderUserHeader() {
 
 async function loadUserPlaylists() {
   try {
-    elements.refreshPlaylistsBtn.textContent = '⏳ Loading...';
+    elements.refreshPlaylistsBtn.textContent = 'Loading...';
     state.playlists = await fetchUserPlaylists(state.token);
     
     elements.playlistSelect.innerHTML = '<option value="">-- Choose a playlist from your library --</option>';
@@ -220,10 +220,10 @@ async function loadUserPlaylists() {
       elements.playlistSelect.appendChild(opt);
     });
 
-    elements.refreshPlaylistsBtn.textContent = '🔄 Refresh List';
+    elements.refreshPlaylistsBtn.textContent = 'Refresh';
   } catch (err) {
     console.error('Error fetching playlists:', err);
-    elements.refreshPlaylistsBtn.textContent = '🔄 Refresh List';
+    elements.refreshPlaylistsBtn.textContent = 'Refresh';
   }
 }
 
@@ -254,11 +254,11 @@ async function loadPlaylistTracks(playlistId) {
     elements.bannerPlaylistImg.src = state.activePlaylistInfo.image || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=200&auto=format&fit=crop&q=80';
     elements.bannerPlaylistTitle.textContent = state.activePlaylistInfo.name;
     elements.bannerPlaylistDesc.textContent = state.activePlaylistInfo.description || 'No description';
-    elements.bannerTotalCount.textContent = `🎵 ${state.allTracks.length} tracks`;
+    elements.bannerTotalCount.textContent = `${state.allTracks.length} tracks`;
     elements.bannerOwner.textContent = `By ${state.activePlaylistInfo.owner}`;
 
     // Set default export playlist name
-    elements.exportPlaylistName.value = `${state.activePlaylistInfo.name} (≤ 2015 Retro Classics)`;
+    elements.exportPlaylistName.value = `${state.activePlaylistInfo.name} (<= 2015 Retro Classics)`;
 
     elements.filterWorkspace.classList.remove('hidden');
     elements.loadingProgressContainer.classList.add('hidden');
@@ -397,18 +397,18 @@ function renderTracksTable(tracks) {
       </div>
       <div class="col-year">
         <span class="year-badge ${isRetro ? 'retro-hit' : 'recent-hit'}" title="Album date: ${track.albumReleaseDate}">
-          ${year} ${track.isEstimatedYear ? '✦' : ''}
+          ${year}
         </span>
       </div>
       <div class="col-status">
         <span class="status-badge ${isInc ? 'included' : 'excluded'}">
-          ${isInc ? '✓ Included' : 'Excluded'}
+          ${isInc ? 'Included' : 'Excluded'}
         </span>
       </div>
       <div class="col-preview">
         ${track.previewUrl ? `
           <button class="btn-preview" data-preview-url="${track.previewUrl}" data-track-id="${track.id}" title="Play 30s preview">
-            ▶
+            Play
           </button>
         ` : `<span style="color:var(--text-muted);font-size:0.8rem;">—</span>`}
       </div>
@@ -438,24 +438,24 @@ function toggleAudioPreview(button) {
   if (state.currentlyPlayingId === trackId) {
     elements.audioPreviewPlayer.pause();
     state.currentlyPlayingId = null;
-    button.textContent = '▶';
+    button.textContent = 'Play';
     button.classList.remove('playing');
   } else {
     // Reset any other playing button
     document.querySelectorAll('.btn-preview.playing').forEach(btn => {
-      btn.textContent = '▶';
+      btn.textContent = 'Play';
       btn.classList.remove('playing');
     });
 
     elements.audioPreviewPlayer.src = previewUrl;
     elements.audioPreviewPlayer.play();
     state.currentlyPlayingId = trackId;
-    button.textContent = '⏸';
+    button.textContent = 'Pause';
     button.classList.add('playing');
 
     elements.audioPreviewPlayer.onended = () => {
       state.currentlyPlayingId = null;
-      button.textContent = '▶';
+      button.textContent = 'Play';
       button.classList.remove('playing');
     };
   }
@@ -482,9 +482,9 @@ function setupEventListeners() {
   elements.copyUriBtn?.addEventListener('click', () => {
     const uri = getRedirectUri();
     navigator.clipboard.writeText(uri).then(() => {
-      elements.copyUriBtn.textContent = '✅ Copied!';
+      elements.copyUriBtn.textContent = 'Copied!';
       setTimeout(() => {
-        elements.copyUriBtn.textContent = '📋 Copy';
+        elements.copyUriBtn.textContent = 'Copy';
       }, 2000);
     });
   });
