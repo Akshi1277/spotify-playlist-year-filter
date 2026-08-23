@@ -765,7 +765,8 @@ body {
 
 .tracks-list-header {
   display: grid;
-  grid-template-columns: 40px 40px 50px 2.5fr 2fr 1.2fr 1.2fr 60px;
+  grid-template-columns: 36px 36px 44px minmax(180px, 2.5fr) minmax(130px, 1.8fr) 80px 95px 70px;
+  gap: 12px;
   align-items: center;
   padding: 12px 14px;
   font-size: 0.78rem;
@@ -774,6 +775,12 @@ body {
   letter-spacing: 0.05em;
   color: var(--text-muted);
   border-bottom: 1px solid var(--border-color);
+}
+
+.tracks-list-header > div {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .tracks-table-body {
@@ -788,7 +795,8 @@ body {
 
 .track-row {
   display: grid;
-  grid-template-columns: 40px 40px 50px 2.5fr 2fr 1.2fr 1.2fr 60px;
+  grid-template-columns: 36px 36px 44px minmax(180px, 2.5fr) minmax(130px, 1.8fr) 80px 95px 70px;
+  gap: 12px;
   align-items: center;
   padding: 10px 14px;
   border-radius: var(--radius-md);
