@@ -70,9 +70,11 @@ export function generateRetroCoverArt(playlistTitle, eraTag = 'Retro Classics', 
   ctx.lineWidth = 8;
   ctx.strokeRect(4, 4, 632, 632);
 
+  const fullDataUrl = canvas.toDataURL('image/jpeg', 0.75);
+
   return {
-    dataUrl: canvas.toDataURL('image/jpeg', 0.9),
-    // Base64 payload string without data:image/jpeg;base64, prefix for Spotify API
-    base64Data: canvas.toDataURL('image/jpeg', 0.9).split(',')[1]
+    dataUrl: fullDataUrl,
+    // Pure base64 data without URI scheme
+    base64Data: fullDataUrl.split(',')[1]
   };
 }

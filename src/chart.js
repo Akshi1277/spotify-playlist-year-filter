@@ -1,7 +1,9 @@
 /**
  * Timeline & Decade Distribution Chart
- * Zero-dependency HTML5 Canvas visualizer
+ * Zero-dependency HTML5 Canvas visualizer with click-to-filter support
  */
+
+let chartDecadesCache = [];
 
 export function renderDecadeChart(canvas, tracks, selectedMinYear, selectedMaxYear) {
   if (!canvas || !tracks || tracks.length === 0) return;
@@ -19,13 +21,13 @@ export function renderDecadeChart(canvas, tracks, selectedMinYear, selectedMaxYe
 
   // Aggregate tracks by decade
   const decades = [
-    { label: '< 1970', min: 0, max: 1969, count: 0 },
+    { label: '< 1970', min: 1940, max: 1969, count: 0 },
     { label: '1970s', min: 1970, max: 1979, count: 0 },
     { label: '1980s', min: 1980, max: 1989, count: 0 },
     { label: '1990s', min: 1990, max: 1999, count: 0 },
     { label: '2000s', min: 2000, max: 2009, count: 0 },
     { label: '2010s', min: 2010, max: 2019, count: 0 },
-    { label: '2020s', min: 2020, max: 2099, count: 0 }
+    { label: '2020s', min: 2020, max: 2029, count: 0 }
   ];
 
   tracks.forEach(t => {
@@ -41,11 +43,13 @@ export function renderDecadeChart(canvas, tracks, selectedMinYear, selectedMaxYe
   ctx.clearRect(0, 0, width, height);
 
   const paddingBottom = 28;
-  const paddingTop = 20;
+  const paddingTop = 24;
   const chartHeight = height - paddingBottom - paddingTop;
   const barWidth = Math.min(56, (width - 40) / decades.length - 12);
   const totalBarWidth = decades.length * (barWidth + 12);
   const startX = (width - totalBarWidth) / 2;
+
+  chartDecadesCache = [];
 
   decades.forEach((d, i) => {
     const x = startX + i * (barWidth + 12);
@@ -54,6 +58,17 @@ export function renderDecadeChart(canvas, tracks, selectedMinYear, selectedMaxYe
 
     // Check if this decade is within active filter range
     const isInsideFilter = (d.max >= selectedMinYear && d.min <= selectedMaxYear);
+
+    // Cache clickable box coordinates
+    chartDecadesCache.push({
+      min: d.min,
+      max: d.max,
+      label: d.label,
+      x,
+      y: y - 10,
+      width: barWidth,
+      height: barH + 30
+    });
 
     // Draw Bar
     ctx.save();
@@ -65,12 +80,12 @@ export function renderDecadeChart(canvas, tracks, selectedMinYear, selectedMaxYe
       ctx.shadowColor = 'rgba(29, 185, 84, 0.4)';
       ctx.shadowBlur = 10;
     } else {
-      ctx.fillStyle = d.count > 0 ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.03)';
+      ctx.fillStyle = d.count > 0 ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.03)';
       ctx.shadowBlur = 0;
     }
 
     // Rounded top bar
-    const radius = Math.min(6, barH / 2);
+    const radius = Math.min(6, Math.max(2, barH / 2));
     ctx.beginPath();
     ctx.moveTo(x, height - paddingBottom);
     ctx.lineTo(x, y + radius);
@@ -84,10 +99,10 @@ export function renderDecadeChart(canvas, tracks, selectedMinYear, selectedMaxYe
 
     // Draw Count label on top of bar
     if (d.count > 0) {
-      ctx.fillStyle = isInsideFilter ? '#fff' : '#64748b';
-      ctx.font = '600 11px Plus Jakarta Sans, sans-serif';
+      ctx.fillStyle = isInsideFilter ? '#fff' : '#94a3b8';
+      ctx.font = '700 12px Plus Jakarta Sans, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(d.count.toString(), x + barWidth / 2, Math.max(14, y - 6));
+      ctx.fillText(d.count.toString(), x + barWidth / 2, Math.max(16, y - 6));
     }
 
     // Draw Decade Label at bottom
@@ -96,4 +111,16 @@ export function renderDecadeChart(canvas, tracks, selectedMinYear, selectedMaxYe
     ctx.textAlign = 'center';
     ctx.fillText(d.label, x + barWidth / 2, height - 8);
   });
+}
+
+export function getClickedDecade(canvas, event) {
+  if (!canvas || chartDecadesCache.length === 0) return null;
+
+  const rect = canvas.getBoundingClientRect();
+  const clickX = event.clientX - rect.left;
+  const clickY = event.clientY - rect.top;
+
+  return chartDecadesCache.find(b => {
+    return clickX >= b.x && clickX <= (b.x + b.width) && clickY >= 0 && clickY <= rect.height;
+  }) || null;
 }

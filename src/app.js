@@ -22,7 +22,7 @@ import {
   uploadPlaylistCover
 } from './spotifyApi.js';
 
-import { renderDecadeChart } from './chart.js';
+import { renderDecadeChart, getClickedDecade } from './chart.js';
 import { generateSocialStoryCard, downloadSocialStoryCard } from './socialCard.js';
 import { generateRetroCoverArt } from './coverArt.js';
 import { segmentTracksByDecade, executeDecadeSplitExport } from './decadeSplitter.js';
@@ -604,6 +604,27 @@ function setupEventListeners() {
     state.isAllEraSelected = false;
     updateDualSliderUI();
     applyFiltersAndRender();
+  });
+
+  // Interactive Timeline Chart Click to Filter by Decade
+  elements.timelineChartCanvas?.addEventListener('click', (e) => {
+    const clicked = getClickedDecade(elements.timelineChartCanvas, e);
+    if (clicked) {
+      state.isAllEraSelected = false;
+      state.minYear = clicked.min;
+      state.maxYear = clicked.max;
+      elements.minYearSlider.value = state.minYear;
+      elements.maxYearSlider.value = state.maxYear;
+      
+      // Update preset chips highlight
+      elements.eraPresetButtons.forEach(btn => {
+        const isMatch = parseInt(btn.dataset.min, 10) === state.minYear && parseInt(btn.dataset.max, 10) === state.maxYear;
+        btn.classList.toggle('active', isMatch);
+      });
+
+      updateDualSliderUI();
+      applyFiltersAndRender();
+    }
   });
 
   // Preset Chips

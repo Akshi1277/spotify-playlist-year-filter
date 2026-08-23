@@ -17,6 +17,7 @@ const SCOPES = [
   'playlist-read-collaborative',
   'playlist-modify-public',
   'playlist-modify-private',
+  'ugc-image-upload',
   'user-read-private',
   'user-read-email'
 ].join(' ');
