@@ -205,7 +205,7 @@ function parseTrackItems(items, startIndex = 0) {
 export async function fetchAllPlaylistTracks(token, playlistId, onProgress = null) {
   let allTracks = [];
   
-  // 1. Fetch playlist metadata (with market=from_token for region-specific Bollywood tracks)
+  // 1. Fetch playlist metadata
   let initial = null;
   try {
     initial = await spotifyFetch(`/playlists/${playlistId}?market=from_token`, token);
@@ -226,7 +226,7 @@ export async function fetchAllPlaylistTracks(token, playlistId, onProgress = nul
     totalTracks: total
   };
 
-  // Process first batch of tracks already included in the playlist object
+  // Process first batch of tracks if already included in the playlist object
   const initialItems = getItemsArray(initial);
   console.log(`Initial items found in playlist payload: ${initialItems.length}`);
 
@@ -243,14 +243,32 @@ export async function fetchAllPlaylistTracks(token, playlistId, onProgress = nul
     }
   }
 
-  // 2. Fetch subsequent pages if playlist has more tracks
+  // 2. Determine next URL to fetch
   let nextUrl = getNextUrl(initial);
+
+  // If playlist metadata did not embed tracks directly, fetch from the dedicated /tracks endpoint
+  if (allTracks.length === 0 && !nextUrl) {
+    console.log('No embedded tracks in metadata payload, fetching from /tracks sub-endpoint...');
+    nextUrl = `https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=100`;
+  }
 
   while (nextUrl) {
     try {
-      console.log('Fetching next page from URL:', nextUrl);
-      const data = await spotifyFetch(nextUrl, token);
-      console.log('Next page response:', data);
+      console.log('Fetching page from URL:', nextUrl);
+      let data = null;
+      try {
+        data = await spotifyFetch(nextUrl, token);
+      } catch (fetchErr) {
+        if (nextUrl.includes('/tracks')) {
+          const fallbackUrl = nextUrl.replace('/tracks', '/items');
+          console.warn(`Fetch ${nextUrl} failed, trying fallback ${fallbackUrl}...`);
+          data = await spotifyFetch(fallbackUrl, token);
+        } else {
+          throw fetchErr;
+        }
+      }
+
+      console.log('Page response:', data);
       
       const pageItems = getItemsArray(data);
       if (pageItems.length > 0) {
@@ -258,11 +276,12 @@ export async function fetchAllPlaylistTracks(token, playlistId, onProgress = nul
         allTracks.push(...nextBatch);
       }
 
+      const pageTotal = getTotalCount(data) || total;
       if (onProgress) {
         onProgress({
           fetched: allTracks.length,
-          total: total || allTracks.length,
-          percent: total > 0 ? Math.min(100, Math.round((allTracks.length / total) * 100)) : 100
+          total: pageTotal || allTracks.length,
+          percent: pageTotal > 0 ? Math.min(100, Math.round((allTracks.length / pageTotal) * 100)) : 100
         });
       }
 
