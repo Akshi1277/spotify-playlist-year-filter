@@ -638,6 +638,25 @@ function setupEventListeners() {
       return;
     }
 
+    // Dynamically set default export title & description based on selected year/era
+    const baseName = state.activePlaylistInfo?.name || 'Playlist';
+    let eraTag = '';
+    let eraDescription = '';
+
+    if (state.isAllEraSelected) {
+      eraTag = 'Curated Selection';
+      eraDescription = 'Curated collection of tracks exported with Spotify Playlist Year Filter.';
+    } else if (state.cutoffYear <= 2000) {
+      eraTag = `<= ${state.cutoffYear} Golden Era`;
+      eraDescription = `Curated collection of vintage tracks released on or before ${state.cutoffYear}.`;
+    } else {
+      eraTag = `<= ${state.cutoffYear} Classics`;
+      eraDescription = `Curated collection of tracks released on or before ${state.cutoffYear}.`;
+    }
+
+    elements.exportPlaylistName.value = `${baseName} (${eraTag})`;
+    elements.exportPlaylistDesc.value = eraDescription;
+
     elements.modalExportCount.textContent = includedTracks.length;
     elements.modalAccountName.textContent = state.user?.display_name || 'Your Spotify Account';
     elements.exportProgressContainer.classList.add('hidden');
