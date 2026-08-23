@@ -1,23 +1,34 @@
-import confetti from 'canvas-confetti';
+/**
+ * Main Application Controller
+ * Handles UI interactions, dual-range era filtering, timeline analytics,
+ * decade batch splitting, story cards, and Spotify export workflows.
+ */
+
 import { 
-  redirectToSpotifyAuth, 
   handleOAuthCallback, 
+  redirectToSpotifyAuth, 
   getValidAccessToken, 
   logout, 
-  getStoredClientId, 
-  setStoredClientId,
-  getRedirectUri
+  getRedirectUri 
 } from './auth.js';
+
 import { 
   fetchCurrentUser, 
   fetchUserPlaylists, 
   fetchAllPlaylistTracks, 
   parsePlaylistId, 
   createPlaylist, 
-  addTracksToPlaylist 
+  addTracksToPlaylist,
+  uploadPlaylistCover
 } from './spotifyApi.js';
 
-// Application State
+import { renderDecadeChart } from './chart.js';
+import { generateSocialStoryCard, downloadSocialStoryCard } from './socialCard.js';
+import { generateRetroCoverArt } from './coverArt.js';
+import { segmentTracksByDecade, executeDecadeSplitExport } from './decadeSplitter.js';
+import confetti from 'canvas-confetti';
+
+// Global Application State
 const state = {
   token: null,
   user: null,
@@ -25,47 +36,43 @@ const state = {
   selectedPlaylistId: null,
   activePlaylistInfo: null,
   allTracks: [],
-  
-  // Filtering & Sorting State
-  cutoffYear: 2015,
+  minYear: 1960,
+  maxYear: 2015,
   isAllEraSelected: false,
-  showOnlyIncluded: true,
   searchQuery: '',
+  showOnlyIncluded: true,
   sortBy: 'original',
-  
-  // Manual inclusions/exclusions toggled by user
-  manualOverrides: new Map(), // trackId -> boolean (true: forced include, false: forced exclude)
-  
-  // Audio preview state
+  manualOverrides: new Map(), // trackId -> boolean
   currentlyPlayingId: null,
-  
-  // Processing flags
   isLoadingPlaylist: false,
-  isExporting: false
+  isExporting: false,
+  socialCardDataUrl: null,
+  decadeSplitBuckets: []
 };
 
-// DOM Elements
+// DOM Element Registry
 const elements = {
-  // Auth
-  authStatusContainer: document.getElementById('authStatusContainer'),
   authSection: document.getElementById('authSection'),
   mainWorkspace: document.getElementById('mainWorkspace'),
-  clientIdInput: document.getElementById('clientIdInput'),
+  authStatusContainer: document.getElementById('authStatusContainer'),
   loginForm: document.getElementById('loginForm'),
+  clientIdInput: document.getElementById('clientIdInput'),
   currentRedirectUri: document.getElementById('currentRedirectUri'),
   copyUriBtn: document.getElementById('copyUriBtn'),
 
-  // Playlist Selection
+  // Workspace Elements
   playlistSelect: document.getElementById('playlistSelect'),
   playlistUrlInput: document.getElementById('playlistUrlInput'),
   loadUrlBtn: document.getElementById('loadUrlBtn'),
   refreshPlaylistsBtn: document.getElementById('refreshPlaylistsBtn'),
+
+  // Progress Bar
   loadingProgressContainer: document.getElementById('loadingProgressContainer'),
+  loadingProgressBar: document.getElementById('loadingProgressBar'),
   loadingStatusText: document.getElementById('loadingStatusText'),
   loadingPercentText: document.getElementById('loadingPercentText'),
-  loadingProgressBar: document.getElementById('loadingProgressBar'),
 
-  // Workspace / Filter Station
+  // Filter Workspace
   filterWorkspace: document.getElementById('filterWorkspace'),
   bannerPlaylistImg: document.getElementById('bannerPlaylistImg'),
   bannerPlaylistTitle: document.getElementById('bannerPlaylistTitle'),
@@ -73,18 +80,28 @@ const elements = {
   bannerTotalCount: document.getElementById('bannerTotalCount'),
   bannerOwner: document.getElementById('bannerOwner'),
 
-  // Slider & Presets
-  yearSlider: document.getElementById('yearSlider'),
-  currentSliderYearValue: document.getElementById('currentSliderYearValue'),
+  // Power Actions
+  openDecadeSplitterBtn: document.getElementById('openDecadeSplitterBtn'),
+  openSocialCardBtn: document.getElementById('openSocialCardBtn'),
+
+  // Timeline Chart
+  timelineChartCanvas: document.getElementById('timelineChartCanvas'),
+
+  // Dual Range Sliders
+  minYearSlider: document.getElementById('minYearSlider'),
+  maxYearSlider: document.getElementById('maxYearSlider'),
+  dualSliderHighlight: document.getElementById('dualSliderHighlight'),
+  displayMinYear: document.getElementById('displayMinYear'),
+  displayMaxYear: document.getElementById('displayMaxYear'),
+  activeRangeSummary: document.getElementById('activeRangeSummary'),
   eraPresetButtons: document.querySelectorAll('.preset-chip'),
 
   // Stats
   statIncludedCount: document.getElementById('statIncludedCount'),
   statExcludedCount: document.getElementById('statExcludedCount'),
-  statExcludedYear: document.getElementById('statExcludedYear'),
   statTotalCount: document.getElementById('statTotalCount'),
 
-  // Search & Filter controls
+  // Search and Sort
   trackSearchInput: document.getElementById('trackSearchInput'),
   showIncludedOnlyBtn: document.getElementById('showIncludedOnlyBtn'),
   showAllTracksBtn: document.getElementById('showAllTracksBtn'),
@@ -98,71 +115,85 @@ const elements = {
   tracksTableBody: document.getElementById('tracksTableBody'),
   noTracksState: document.getElementById('noTracksState'),
 
-  // Floating Bar
+  // Export Floating Bar
   exportTrackCount: document.getElementById('exportTrackCount'),
   openExportModalBtn: document.getElementById('openExportModalBtn'),
 
-  // Modals
+  // Export Modal
   exportModal: document.getElementById('exportModal'),
   exportForm: document.getElementById('exportForm'),
   exportPlaylistName: document.getElementById('exportPlaylistName'),
   exportPlaylistDesc: document.getElementById('exportPlaylistDesc'),
   exportPlaylistPublic: document.getElementById('exportPlaylistPublic'),
+  generateCoverArtCheck: document.getElementById('generateCoverArtCheck'),
   modalExportCount: document.getElementById('modalExportCount'),
   modalAccountName: document.getElementById('modalAccountName'),
-  cancelExportBtn: document.getElementById('cancelExportBtn'),
-  closeModalBtn: document.getElementById('closeModalBtn'),
   exportProgressContainer: document.getElementById('exportProgressContainer'),
+  exportProgressBar: document.getElementById('exportProgressBar'),
   exportProgressStatus: document.getElementById('exportProgressStatus'),
   exportProgressPercent: document.getElementById('exportProgressPercent'),
-  exportProgressBar: document.getElementById('exportProgressBar'),
   confirmExportBtn: document.getElementById('confirmExportBtn'),
+  cancelExportBtn: document.getElementById('cancelExportBtn'),
+  closeModalBtn: document.getElementById('closeModalBtn'),
+
+  // Decade Splitter Modal
+  decadeSplitterModal: document.getElementById('decadeSplitterModal'),
+  decadeBucketsContainer: document.getElementById('decadeBucketsContainer'),
+  decadeExportProgressContainer: document.getElementById('decadeExportProgressContainer'),
+  decadeExportProgressBar: document.getElementById('decadeExportProgressBar'),
+  decadeExportStatus: document.getElementById('decadeExportStatus'),
+  decadeExportPercent: document.getElementById('decadeExportPercent'),
+  confirmDecadeSplitBtn: document.getElementById('confirmDecadeSplitBtn'),
+  cancelDecadeSplitBtn: document.getElementById('cancelDecadeSplitBtn'),
+  closeDecadeModalBtn: document.getElementById('closeDecadeModalBtn'),
+
+  // Social Story Card Modal
+  socialCardModal: document.getElementById('socialCardModal'),
+  storyCardPreviewImg: document.getElementById('storyCardPreviewImg'),
+  downloadStoryCardBtn: document.getElementById('downloadStoryCardBtn'),
+  closeSocialModalBtn: document.getElementById('closeSocialModalBtn'),
+  closeStoryModalBtn: document.getElementById('closeStoryModalBtn'),
 
   // Success Modal
   successModal: document.getElementById('successModal'),
   successSummaryText: document.getElementById('successSummaryText'),
+  createdPlaylistsLinksList: document.getElementById('createdPlaylistsLinksList'),
   openInSpotifyBtn: document.getElementById('openInSpotifyBtn'),
   closeSuccessBtn: document.getElementById('closeSuccessBtn'),
 
-  // Audio
+  // Audio Player
   audioPreviewPlayer: document.getElementById('audioPreviewPlayer')
 };
 
-// Initialize Application
+// Application Initialization
 async function init() {
-  // Update redirect URI in UI
-  const currentUri = getRedirectUri();
   if (elements.currentRedirectUri) {
-    elements.currentRedirectUri.textContent = currentUri;
+    elements.currentRedirectUri.textContent = getRedirectUri();
   }
 
-  // Pre-fill stored client ID
-  const storedId = getStoredClientId();
-  if (storedId && elements.clientIdInput) {
-    elements.clientIdInput.value = storedId;
-  }
-
-  // Bind Event Listeners
   setupEventListeners();
 
   try {
-    // Check if handling OAuth callback
-    const callbackToken = await handleOAuthCallback();
-    if (callbackToken) {
-      state.token = callbackToken;
-    } else {
-      state.token = await getValidAccessToken();
-    }
-
+    state.token = await handleOAuthCallback();
     if (state.token) {
       await loadAuthenticatedUser();
     } else {
-      showAuthSection();
+      const activeToken = await getValidAccessToken();
+      if (activeToken) {
+        state.token = activeToken;
+        await loadAuthenticatedUser();
+      } else {
+        showAuthSection();
+      }
     }
   } catch (err) {
     console.error('Auth initialization error:', err);
-    alert(`Authentication Notice: ${err.message}`);
     showAuthSection();
+  }
+
+  // Register PWA Service Worker
+  if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
+    navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW registration note:', err));
   }
 }
 
@@ -266,12 +297,10 @@ async function loadPlaylistTracks(playlistId) {
     elements.bannerTotalCount.textContent = `${state.allTracks.length} tracks`;
     elements.bannerOwner.textContent = `By ${state.activePlaylistInfo.owner}`;
 
-    // Set default export playlist name
-    elements.exportPlaylistName.value = `${state.activePlaylistInfo.name} (<= 2015 Retro Classics)`;
-
     elements.filterWorkspace.classList.remove('hidden');
     elements.loadingProgressContainer.classList.add('hidden');
 
+    updateDualSliderUI();
     applyFiltersAndRender();
   } catch (err) {
     console.error('Failed to load playlist tracks:', err);
@@ -293,12 +322,38 @@ function isTrackIncluded(track) {
     return true;
   }
 
-  // Check release year
+  // Check release year within [minYear, maxYear] window
   if (!track.releaseYear) {
     return false;
   }
 
-  return track.releaseYear <= state.cutoffYear;
+  return track.releaseYear >= state.minYear && track.releaseYear <= state.maxYear;
+}
+
+function updateDualSliderUI() {
+  const minSlider = elements.minYearSlider;
+  const maxSlider = elements.maxYearSlider;
+  const track = elements.dualSliderHighlight;
+
+  if (!minSlider || !maxSlider || !track) return;
+
+  const min = parseInt(minSlider.min, 10);
+  const max = parseInt(minSlider.max, 10);
+
+  const percentMin = ((state.minYear - min) / (max - min)) * 100;
+  const percentMax = ((state.maxYear - min) / (max - min)) * 100;
+
+  track.style.left = `${percentMin}%`;
+  track.style.width = `${percentMax - percentMin}%`;
+
+  elements.displayMinYear.textContent = state.minYear;
+  elements.displayMaxYear.textContent = state.maxYear;
+
+  if (state.isAllEraSelected) {
+    elements.activeRangeSummary.textContent = 'Window: All Tracks';
+  } else {
+    elements.activeRangeSummary.textContent = `Window: ${state.minYear} to ${state.maxYear}`;
+  }
 }
 
 function applyFiltersAndRender() {
@@ -359,12 +414,16 @@ function applyFiltersAndRender() {
   elements.statIncludedCount.textContent = includedCount;
   elements.statExcludedCount.textContent = excludedCount;
   elements.statTotalCount.textContent = state.allTracks.length;
-  elements.statExcludedYear.textContent = state.isAllEraSelected ? 'All' : state.cutoffYear;
   elements.exportTrackCount.textContent = includedCount;
   elements.modalExportCount.textContent = includedCount;
 
   // Render Table Rows
   renderTracksTable(displayTracks);
+
+  // Render Decade Timeline Chart
+  if (elements.timelineChartCanvas) {
+    renderDecadeChart(elements.timelineChartCanvas, state.allTracks, state.minYear, state.maxYear);
+  }
 }
 
 function renderTracksTable(tracks) {
@@ -522,17 +581,28 @@ function setupEventListeners() {
     loadUserPlaylists();
   });
 
-  // Year Slider
-  elements.yearSlider?.addEventListener('input', (e) => {
-    state.cutoffYear = parseInt(e.target.value, 10);
+  // Dual Range Sliders
+  elements.minYearSlider?.addEventListener('input', (e) => {
+    let val = parseInt(e.target.value, 10);
+    if (val > state.maxYear) {
+      val = state.maxYear;
+      elements.minYearSlider.value = val;
+    }
+    state.minYear = val;
     state.isAllEraSelected = false;
-    elements.currentSliderYearValue.textContent = `≤ ${state.cutoffYear}`;
+    updateDualSliderUI();
+    applyFiltersAndRender();
+  });
 
-    // Update preset buttons active state
-    elements.eraPresetButtons.forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.year === state.cutoffYear.toString());
-    });
-
+  elements.maxYearSlider?.addEventListener('input', (e) => {
+    let val = parseInt(e.target.value, 10);
+    if (val < state.minYear) {
+      val = state.minYear;
+      elements.maxYearSlider.value = val;
+    }
+    state.maxYear = val;
+    state.isAllEraSelected = false;
+    updateDualSliderUI();
     applyFiltersAndRender();
   });
 
@@ -542,17 +612,19 @@ function setupEventListeners() {
       elements.eraPresetButtons.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
 
-      const yearVal = btn.dataset.year;
-      if (yearVal === 'all') {
+      if (btn.dataset.all === 'true') {
         state.isAllEraSelected = true;
-        elements.currentSliderYearValue.textContent = 'All Tracks';
+        state.minYear = 1960;
+        state.maxYear = 2026;
       } else {
         state.isAllEraSelected = false;
-        state.cutoffYear = parseInt(yearVal, 10);
-        elements.yearSlider.value = state.cutoffYear;
-        elements.currentSliderYearValue.textContent = `≤ ${state.cutoffYear}`;
+        state.minYear = parseInt(btn.dataset.min, 10);
+        state.maxYear = parseInt(btn.dataset.max, 10);
       }
 
+      elements.minYearSlider.value = state.minYear;
+      elements.maxYearSlider.value = state.maxYear;
+      updateDualSliderUI();
       applyFiltersAndRender();
     });
   });
@@ -638,20 +710,19 @@ function setupEventListeners() {
       return;
     }
 
-    // Dynamically set default export title & description based on selected year/era
     const baseName = state.activePlaylistInfo?.name || 'Playlist';
     let eraTag = '';
     let eraDescription = '';
 
     if (state.isAllEraSelected) {
       eraTag = 'Curated Selection';
-      eraDescription = 'Curated collection of tracks exported with Spotify Playlist Year Filter.';
-    } else if (state.cutoffYear <= 2000) {
-      eraTag = `<= ${state.cutoffYear} Golden Era`;
-      eraDescription = `Curated collection of vintage tracks released on or before ${state.cutoffYear}.`;
+      eraDescription = 'Curated collection of tracks exported with Spotify Playlist Filter.';
+    } else if (state.minYear === 1960) {
+      eraTag = `<= ${state.maxYear} Classics`;
+      eraDescription = `Curated collection of tracks released on or before ${state.maxYear}.`;
     } else {
-      eraTag = `<= ${state.cutoffYear} Classics`;
-      eraDescription = `Curated collection of tracks released on or before ${state.cutoffYear}.`;
+      eraTag = `${state.minYear}-${state.maxYear} Era`;
+      eraDescription = `Curated collection of tracks released between ${state.minYear} and ${state.maxYear}.`;
     }
 
     elements.exportPlaylistName.value = `${baseName} (${eraTag})`;
@@ -678,23 +749,172 @@ function setupEventListeners() {
     await handleExportPlaylist();
   });
 
-  // Success Modal Close
+  // Open Decade Splitter Modal
+  elements.openDecadeSplitterBtn?.addEventListener('click', () => {
+    if (!state.allTracks || state.allTracks.length === 0) {
+      alert('Please load a playlist first.');
+      return;
+    }
+
+    state.decadeSplitBuckets = segmentTracksByDecade(state.allTracks);
+    renderDecadeBucketsUI();
+    elements.decadeExportProgressContainer.classList.add('hidden');
+    elements.confirmDecadeSplitBtn.disabled = false;
+    elements.decadeSplitterModal.classList.remove('hidden');
+  });
+
+  elements.cancelDecadeSplitBtn?.addEventListener('click', () => {
+    elements.decadeSplitterModal.classList.add('hidden');
+  });
+  elements.closeDecadeModalBtn?.addEventListener('click', () => {
+    elements.decadeSplitterModal.classList.add('hidden');
+  });
+
+  // Confirm Decade Split Export
+  elements.confirmDecadeSplitBtn?.addEventListener('click', async () => {
+    await handleDecadeSplitExport();
+  });
+
+  // Open Social Story Card Modal
+  elements.openSocialCardBtn?.addEventListener('click', () => {
+    if (!state.allTracks || state.allTracks.length === 0) {
+      alert('Please load a playlist first.');
+      return;
+    }
+
+    const dataUrl = generateSocialStoryCard(
+      state.activePlaylistInfo, 
+      state.allTracks, 
+      state.user?.display_name || 'Music Lover'
+    );
+
+    state.socialCardDataUrl = dataUrl;
+    elements.storyCardPreviewImg.src = dataUrl;
+    elements.socialCardModal.classList.remove('hidden');
+  });
+
+  elements.downloadStoryCardBtn?.addEventListener('click', () => {
+    if (state.socialCardDataUrl) {
+      const cleanName = (state.activePlaylistInfo?.name || 'playlist').toLowerCase().replace(/[^a-z0-9]/g, '-');
+      downloadSocialStoryCard(state.socialCardDataUrl, `${cleanName}-era-dna.png`);
+    }
+  });
+
+  elements.closeSocialModalBtn?.addEventListener('click', () => {
+    elements.socialCardModal.classList.add('hidden');
+  });
+  elements.closeStoryModalBtn?.addEventListener('click', () => {
+    elements.socialCardModal.classList.add('hidden');
+  });
+
+  // Close Success Modal
   elements.closeSuccessBtn?.addEventListener('click', () => {
     elements.successModal.classList.add('hidden');
   });
 }
 
-// Export Playlist to Spotify
+function renderDecadeBucketsUI() {
+  elements.decadeBucketsContainer.innerHTML = '';
+
+  if (state.decadeSplitBuckets.length === 0) {
+    elements.decadeBucketsContainer.innerHTML = '<p class="empty-state">No track release dates found to split.</p>';
+    return;
+  }
+
+  state.decadeSplitBuckets.forEach(bucket => {
+    const div = document.createElement('div');
+    div.className = 'decade-bucket-card';
+    div.innerHTML = `
+      <div class="bucket-left">
+        <input type="checkbox" class="decade-bucket-check" data-bucket-id="${bucket.id}" checked />
+        <div>
+          <div class="bucket-title">${escapeHtml(bucket.name)}</div>
+          <div class="bucket-sub">${escapeHtml(bucket.subtext)}</div>
+        </div>
+      </div>
+      <div class="bucket-count-badge">${bucket.tracks.length} tracks</div>
+    `;
+    elements.decadeBucketsContainer.appendChild(div);
+  });
+}
+
+async function handleDecadeSplitExport() {
+  const checks = elements.decadeBucketsContainer.querySelectorAll('.decade-bucket-check:checked');
+  const selectedIds = Array.from(checks).map(c => c.dataset.bucketId);
+  const chosenBuckets = state.decadeSplitBuckets.filter(b => selectedIds.includes(b.id));
+
+  if (chosenBuckets.length === 0) {
+    alert('Please select at least one decade to export.');
+    return;
+  }
+
+  elements.decadeExportProgressContainer.classList.remove('hidden');
+  elements.confirmDecadeSplitBtn.disabled = true;
+
+  try {
+    const results = await executeDecadeSplitExport(
+      state.token,
+      state.user.id,
+      state.activePlaylistInfo.name,
+      chosenBuckets,
+      (prog) => {
+        elements.decadeExportStatus.textContent = `Creating ${prog.currentName} (${prog.currentIndex} of ${prog.totalPlaylists})...`;
+        elements.decadeExportPercent.textContent = `${prog.percent}%`;
+        elements.decadeExportProgressBar.style.width = `${prog.percent}%`;
+      }
+    );
+
+    elements.decadeSplitterModal.classList.add('hidden');
+
+    // Show Success Modal with all created playlist links
+    elements.successSummaryText.innerHTML = `
+      Successfully generated <strong>${results.length} decade playlists</strong> in your Spotify account!
+    `;
+
+    elements.createdPlaylistsLinksList.innerHTML = '';
+    elements.createdPlaylistsLinksList.classList.remove('hidden');
+
+    results.forEach(res => {
+      const item = document.createElement('div');
+      item.className = 'created-link-item';
+      item.innerHTML = `
+        <span>${escapeHtml(res.bucketName)} (${res.trackCount} tracks)</span>
+        <a href="${res.playlistUrl}" target="_blank">Open in Spotify ➔</a>
+      `;
+      elements.createdPlaylistsLinksList.appendChild(item);
+    });
+
+    elements.openInSpotifyBtn.href = results[0]?.playlistUrl || '#';
+    elements.successModal.classList.remove('hidden');
+
+    confetti({
+      particleCount: 140,
+      spread: 80,
+      origin: { y: 0.6 }
+    });
+
+  } catch (err) {
+    console.error('Decade split export error:', err);
+    alert(`Export failed: ${err.message}`);
+  } finally {
+    elements.confirmDecadeSplitBtn.disabled = false;
+  }
+}
+
+// Single Playlist Export Handler
 async function handleExportPlaylist() {
   if (state.isExporting) return;
   state.isExporting = true;
 
-  const playlistName = elements.exportPlaylistName.value.trim() || 'Bollywood Retro Classics (≤ 2015)';
+  const playlistName = elements.exportPlaylistName.value.trim();
   const playlistDesc = elements.exportPlaylistDesc.value.trim();
   const isPublic = elements.exportPlaylistPublic.checked;
+  const shouldGenCover = elements.generateCoverArtCheck.checked;
 
-  const tracksToExport = state.allTracks.filter(t => isTrackIncluded(t));
-  const trackUris = tracksToExport.map(t => t.uri);
+  const trackUris = state.allTracks
+    .filter(t => isTrackIncluded(t))
+    .map(t => t.uri)
+    .filter(Boolean);
 
   if (trackUris.length === 0) {
     alert('No tracks to export.');
@@ -717,28 +937,39 @@ async function handleExportPlaylist() {
       isPublic: isPublic
     });
 
-    elements.exportProgressStatus.textContent = `Adding ${trackUris.length} songs to Spotify in batches...`;
-
     // 2. Batch Add Tracks
+    elements.exportProgressStatus.textContent = `Adding ${trackUris.length} tracks in batches...`;
     await addTracksToPlaylist(state.token, newPlaylist.id, trackUris, (progress) => {
-      elements.exportProgressStatus.textContent = `Adding songs (${progress.added} of ${progress.total})...`;
+      elements.exportProgressStatus.textContent = `Adding tracks (${progress.added} of ${progress.total})...`;
       elements.exportProgressPercent.textContent = `${progress.percent}%`;
       elements.exportProgressBar.style.width = `${progress.percent}%`;
     });
+
+    // 3. Optional: Generate & Upload Retro Cover Art
+    if (shouldGenCover) {
+      try {
+        elements.exportProgressStatus.textContent = 'Generating & uploading retro cover art...';
+        const eraLabel = state.isAllEraSelected ? 'Vault Hits' : `${state.minYear}-${state.maxYear}`;
+        const cover = generateRetroCoverArt(playlistName, eraLabel, `${trackUris.length} Tracks Vault`);
+        await uploadPlaylistCover(state.token, newPlaylist.id, cover.base64Data);
+      } catch (coverErr) {
+        console.warn('Cover art upload note:', coverErr);
+      }
+    }
 
     // Close export modal
     elements.exportModal.classList.add('hidden');
 
     // Setup success modal
+    elements.createdPlaylistsLinksList.classList.add('hidden');
     elements.successSummaryText.innerHTML = `
-      Successfully added <strong>${trackUris.length} songs</strong> to your new playlist 
+      Successfully added <strong>${trackUris.length} tracks</strong> to your new playlist 
       <strong style="color:var(--spotify-green)">"${escapeHtml(playlistName)}"</strong>!
     `;
     elements.openInSpotifyBtn.href = newPlaylist.external_urls?.spotify || `https://open.spotify.com/playlist/${newPlaylist.id}`;
 
     elements.successModal.classList.remove('hidden');
 
-    // Trigger celebratory confetti
     confetti({
       particleCount: 120,
       spread: 70,

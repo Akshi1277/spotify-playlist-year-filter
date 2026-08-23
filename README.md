@@ -1,17 +1,45 @@
-# Spotify Playlist Year Filter
+# Spotify Playlist Filter
 
 [![Live Website](https://img.shields.io/badge/Live%20Website-spotify--playlist--year--filter.vercel.app-1DB954?style=for-the-badge&logo=spotify&logoColor=white)](https://spotify-playlist-year-filter.vercel.app/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 [![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 
-A professional, client-side web application that connects to Spotify via PKCE OAuth, scans large playlists (200+ or 1,000+ tracks), extracts accurate album release years, and creates new curated era-specific playlists (such as **<= 2015 Classics**, **90s Golden Era**, or **2000s Nostalgia**) with a single click.
+A professional, client-side web application that connects to Spotify via PKCE OAuth to analyze, filter, and segment playlists by release year. Features dual-range era window filtering, batch decade splitting, visual timeline analytics, downloadable Instagram Story cards, generative retro cover art, and 0ms IndexedDB local caching.
 
 ---
 
 ## Live Website
 
-You can use the tool directly in your browser without installing any software:  
+Use the tool directly in your browser without installing any software:  
 **[https://spotify-playlist-year-filter.vercel.app/](https://spotify-playlist-year-filter.vercel.app/)**
+
+---
+
+## Key Capabilities
+
+### 1. Dual-Range Era Window Filtering
+- Adjust both **Minimum Year** and **Maximum Year** sliders to isolate specific memory brackets (such as `2005 to 2012` for peak nostalgia or `1990 to 1999` for pure 90s classics).
+- One-click presets: `Pre-2015 Classics`, `2000s Nostalgia (2000-2009)`, `Pure 90s (1990-1999)`, `Golden Era (<= 2000)`, `All Tracks`.
+
+### 2. 1-Click Decade Splitter (Batch Generation)
+- Automatically segment large playlists (200+ or 1,000+ tracks) into separate decade collections (`Vintage Era`, `90s Golden Era`, `2000s Nostalgia`, `2010s Hits`, `2020s Modern`).
+- Creates and populates all selected decade playlists in your Spotify account in a single batch.
+
+### 3. Interactive Timeline Era Analytics
+- Zero-dependency Canvas chart visualizing the chronological distribution of tracks across decades before and after filtering.
+
+### 4. Downloadable Social Story Card (Instagram & Twitter)
+- Generates a high-resolution 1080x1920 graphic summarizing your playlist DNA:
+  - Era percentage breakdown (e.g. `58% 2000s`, `28% 90s`, `14% Recent`).
+  - Top 5 oldest classic songs found.
+  - Direct PNG download ready for social media sharing.
+
+### 5. Generative Retro Playlist Cover Art
+- Automatically renders minimalist vinyl-groove cover art with embedded playlist typography and uploads it directly to newly created Spotify playlists.
+
+### 6. High Performance & Offline Caching
+- **IndexedDB Local Cache**: Analyzed playlists load in 0ms on subsequent visits without repeated Spotify API calls.
+- **Progressive Web App (PWA)**: Installable on iOS and Android home screens.
 
 ---
 
@@ -21,30 +49,14 @@ You can use the tool directly in your browser without installing any software:
 2. **Connect with Spotify**:
    - Paste your Spotify **Client ID** (see [Spotify Developer Setup](#spotify-developer-setup) below for the 1-minute free setup).
    - Click **Connect with Spotify** and authorize the application.
-3. **Select and Filter**:
+3. **Analyze and Filter**:
    - Choose any playlist created by your account from the dropdown or paste your playlist link.
-   - The application scans all tracks and automatically detects album release years (including smart detection for movie soundtracks and compilation albums).
-   - Adjust the **Year Cutoff Slider** (e.g. `<= 2015`) or select a preset era (`Pre-2015 Classics`, `2000s & 90s`, `Golden Era`).
-   - Review tracks in the table, preview audio clips, and manually toggle individual songs if needed.
+   - Adjust the **Dual Slider Range** to select your target era bracket.
+   - Use the **Timeline Chart** to inspect decade density.
+   - Click **Share Story Card** to download your playlist DNA graphic.
+   - Click **Decade Splitter** to batch-generate decade playlists.
 4. **Export to Spotify**:
-   - Click **Export to Spotify Playlist**.
-   - Your new playlist will be created directly in your Spotify library.
-
----
-
-## Features
-
-- **Client-Side PKCE OAuth**: Operates entirely within the browser. No backend server, no database, no passwords stored, and zero data leaves your local machine.
-- **Deep Pagination Handling**: Reliably processes large playlists with 200, 500, or 2,000+ songs.
-- **Smart Release Year Detection**: Extracts `album.release_date` and intelligently handles compilation and remaster album edge cases (such as extracting original movie release years from tracks like `From "Devdas - 2002"`).
-- **Interactive Filter Controls**:
-  - Real-time year cutoff slider.
-  - Quick era presets (`Pre-2015 Classics`, `2000s & 90s`, `Golden Era`, `All Tracks`).
-  - Search by song title, artist, or album.
-  - Sorting (Oldest First, Newest First, Title A-Z, Artist A-Z).
-  - Manual toggle checkboxes to include or exclude any specific track.
-- **Direct Spotify Exporter**: Automatically creates the new playlist in your Spotify account with custom title and description.
-- **Resilient Exporter**: Automatically skips delisted or region-locked tracks so the export never fails.
+   - Click **Export to Spotify Playlist** to create the curated playlist with optional custom cover art.
 
 ---
 

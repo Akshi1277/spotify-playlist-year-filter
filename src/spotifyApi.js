@@ -199,10 +199,32 @@ function parseTrackItems(items, startIndex = 0) {
     .filter(Boolean);
 }
 
+import { getCachedPlaylist, setCachedPlaylist } from './db.js';
+
 /**
- * Fetch all tracks from a playlist handling full pagination (for 200+, 500+, or 2000+ songs)
+ * Fetch all tracks from a playlist handling full pagination and IndexedDB local caching
  */
-export async function fetchAllPlaylistTracks(token, playlistId, onProgress = null) {
+export async function fetchAllPlaylistTracks(token, playlistId, onProgress = null, bypassCache = false) {
+  // Check local IndexedDB cache first
+  if (!bypassCache) {
+    const cached = await getCachedPlaylist(playlistId);
+    if (cached && Array.isArray(cached.tracks) && cached.tracks.length > 0) {
+      console.log(`Loaded ${cached.tracks.length} tracks from local IndexedDB cache in 0ms!`);
+      if (onProgress) {
+        onProgress({
+          fetched: cached.tracks.length,
+          total: cached.tracks.length,
+          percent: 100
+        });
+      }
+      return {
+        playlistInfo: cached.playlistInfo,
+        tracks: cached.tracks,
+        fromCache: true
+      };
+    }
+  }
+
   let allTracks = [];
   
   // 1. Fetch playlist metadata
@@ -303,9 +325,15 @@ export async function fetchAllPlaylistTracks(token, playlistId, onProgress = nul
   playlistInfo.totalTracks = allTracks.length;
   console.log(`Finished loading playlist. Total parsed tracks: ${allTracks.length}`);
 
+  // Cache in IndexedDB for 0ms future reloads
+  if (allTracks.length > 0) {
+    setCachedPlaylist(playlistId, playlistInfo, allTracks);
+  }
+
   return {
     playlistInfo,
-    tracks: allTracks
+    tracks: allTracks,
+    fromCache: false
   };
 }
 
@@ -358,6 +386,32 @@ export async function createPlaylist(token, userId, { name, description, isPubli
         public: isPublic
       })
     });
+  }
+}
+
+/**
+ * Upload custom cover image to playlist
+ */
+export async function uploadPlaylistCover(token, playlistId, base64Jpeg) {
+  try {
+    const url = `https://api.spotify.com/v1/playlists/${playlistId}/images`;
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'image/jpeg'
+      },
+      body: base64Jpeg
+    });
+
+    if (!response.ok) {
+      console.warn('Custom cover upload notice:', response.statusText);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn('Cover art upload error:', err);
+    return false;
   }
 }
 

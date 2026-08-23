@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Spotify Playlist Year Filter — Filter by Release Year</title>
+  <title>Spotify Playlist Filter — Era & Release Year Engine</title>
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#0a0d14">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -11,7 +13,7 @@
 </head>
 <body class="bg-dark text-light">
 
-  <!-- Floating Background Ambient Glow -->
+  <!-- Floating Ambient Glow Background -->
   <div class="ambient-glow glow-1"></div>
   <div class="ambient-glow glow-2"></div>
 
@@ -42,7 +44,7 @@
       <div class="auth-card-content">
         <h1 class="hero-heading">Filter Playlists by <span class="highlight-gradient">Release Year</span></h1>
         <p class="hero-subtext">
-          Scan any Spotify playlist, filter songs by their original release date, and create custom era playlists in seconds.
+          Scan any Spotify playlist, isolate custom era brackets, view chronological analytics, and batch-split decades with one click.
         </p>
 
         <div class="setup-guide-box">
@@ -126,7 +128,7 @@
           </div>
         </div>
 
-        <!-- Progress Loading Indicator for 200+ tracks -->
+        <!-- Progress Loading Indicator -->
         <div id="loadingProgressContainer" class="loading-container hidden">
           <div class="loading-header">
             <span id="loadingStatusText">Loading tracks...</span>
@@ -141,57 +143,102 @@
       <!-- Step 2: Loaded Playlist Info & Interactive Year Filter Controls -->
       <div id="filterWorkspace" class="filter-workspace hidden">
         
-        <!-- Playlist Banner Card -->
+        <!-- Playlist Banner Card & Power Actions -->
         <div class="card glass-panel playlist-hero-banner">
-          <img id="bannerPlaylistImg" class="playlist-cover-art" src="" alt="Playlist Cover" />
-          <div class="banner-details">
-            <span class="badge badge-spotify">Active Playlist</span>
-            <h2 id="bannerPlaylistTitle" class="banner-title">Playlist Title</h2>
-            <p id="bannerPlaylistDesc" class="banner-desc">Description</p>
-            <div class="banner-meta">
-              <span id="bannerTotalCount">0 tracks</span>
-              <span class="meta-dot">•</span>
-              <span id="bannerOwner">Owner</span>
+          <div class="banner-left">
+            <img id="bannerPlaylistImg" class="playlist-cover-art" src="" alt="Playlist Cover" />
+            <div class="banner-details">
+              <span class="badge badge-spotify">Active Playlist</span>
+              <h2 id="bannerPlaylistTitle" class="banner-title">Playlist Title</h2>
+              <p id="bannerPlaylistDesc" class="banner-desc">Description</p>
+              <div class="banner-meta">
+                <span id="bannerTotalCount">0 tracks</span>
+                <span class="meta-dot">•</span>
+                <span id="bannerOwner">Owner</span>
+              </div>
             </div>
+          </div>
+
+          <!-- Power Tool Buttons -->
+          <div class="banner-power-actions">
+            <button id="openDecadeSplitterBtn" class="btn btn-secondary btn-sm" title="Split into 90s, 2000s, 2010s in 1 click">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+              Decade Splitter
+            </button>
+            <button id="openSocialCardBtn" class="btn btn-secondary btn-sm" title="Generate Story Card graphic">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
+              Share Story Card
+            </button>
           </div>
         </div>
 
-        <!-- Filter Control Station -->
+        <!-- Interactive Timeline Decade Chart Card -->
+        <section class="card glass-panel timeline-chart-card">
+          <div class="chart-header">
+            <div>
+              <h3 class="chart-title">Playlist Era Distribution</h3>
+              <p class="chart-subtitle">Chronological spread across musical decades</p>
+            </div>
+          </div>
+          <div class="canvas-container">
+            <canvas id="timelineChartCanvas"></canvas>
+          </div>
+        </section>
+
+        <!-- Filter Control Station with Dual-Range Slider -->
         <section class="card glass-panel filter-station-card">
           <div class="filter-top-row">
             <div class="filter-heading-group">
-              <h2 class="card-title">Filter by Release Year</h2>
-              <p class="card-subtitle">Set your target cutoff year. Songs released on or before will be selected automatically.</p>
+              <h2 class="card-title">Filter by Release Year Window</h2>
+              <p class="card-subtitle">Set your minimum and maximum release years to isolate specific era brackets.</p>
             </div>
 
             <!-- Era Quick Presets -->
             <div class="era-presets">
-              <button class="preset-chip active" data-year="2015">Pre-2015 Classics (&le; 2015)</button>
-              <button class="preset-chip" data-year="2010">2000s & 90s (&le; 2010)</button>
-              <button class="preset-chip" data-year="2000">Golden Era (&le; 2000)</button>
-              <button class="preset-chip" data-year="all">All Tracks</button>
+              <button class="preset-chip active" data-min="1960" data-max="2015">Pre-2015 Classics (&le; 2015)</button>
+              <button class="preset-chip" data-min="2000" data-max="2009">2000s Nostalgia (2000-2009)</button>
+              <button class="preset-chip" data-min="1990" data-max="1999">Pure 90s (1990-1999)</button>
+              <button class="preset-chip" data-min="1960" data-max="2000">Golden Era (&le; 2000)</button>
+              <button class="preset-chip" data-min="1960" data-max="2026" data-all="true">All Tracks</button>
             </div>
           </div>
 
-          <!-- Dynamic Year Slider -->
-          <div class="year-slider-box">
-            <div class="slider-labels">
-              <span class="slider-min">1960</span>
-              <div class="active-year-display">
-                Selected Cutoff: <span id="currentSliderYearValue" class="slider-year-val">&le; 2015</span>
+          <!-- Dual-Thumb Range Slider Box -->
+          <div class="dual-range-box">
+            <div class="range-values-display">
+              <div class="range-val-badge">
+                <span>From Year:</span>
+                <strong id="displayMinYear">1960</strong>
               </div>
-              <span class="slider-max">2026</span>
+              <div class="range-val-separator">➔</div>
+              <div class="range-val-badge">
+                <span>To Year:</span>
+                <strong id="displayMaxYear">2015</strong>
+              </div>
+              <div class="active-range-summary" id="activeRangeSummary">
+                Window: 1960 to 2015
+              </div>
             </div>
 
-            <div class="range-wrapper">
+            <div class="dual-slider-wrapper">
+              <div class="dual-slider-track" id="dualSliderHighlight"></div>
               <input 
                 type="range" 
-                id="yearSlider" 
+                id="minYearSlider" 
+                min="1960" 
+                max="2026" 
+                value="1960" 
+                step="1"
+                class="range-thumb thumb-min"
+              />
+              <input 
+                type="range" 
+                id="maxYearSlider" 
                 min="1960" 
                 max="2026" 
                 value="2015" 
                 step="1"
-                class="custom-slider"
+                class="range-thumb thumb-max"
               />
             </div>
           </div>
@@ -204,7 +251,7 @@
             </div>
             <div class="stat-pill stat-excluded">
               <span class="indicator-dot dot-muted"></span>
-              <span id="statExcludedCount">0</span> excluded (&gt; <span id="statExcludedYear">2015</span>)
+              <span id="statExcludedCount">0</span> excluded
             </div>
             <div class="stat-pill stat-total">
               <span class="indicator-dot dot-blue"></span>
@@ -317,10 +364,14 @@
             >Curated collection of tracks released on or before 2015.</textarea>
           </div>
 
-          <div class="input-group checkbox-group">
+          <div class="input-row-options">
             <label class="custom-checkbox-label">
               <input type="checkbox" id="exportPlaylistPublic" checked />
               <span>Make playlist Public</span>
+            </label>
+            <label class="custom-checkbox-label">
+              <input type="checkbox" id="generateCoverArtCheck" checked />
+              <span>Generate custom retro cover art</span>
             </label>
           </div>
 
@@ -350,6 +401,65 @@
       </div>
     </div>
 
+    <!-- DECADE SPLITTER MODAL -->
+    <div id="decadeSplitterModal" class="modal-backdrop hidden">
+      <div class="modal-card glass-panel modal-lg">
+        <div class="modal-header">
+          <div>
+            <h3>1-Click Decade Splitter</h3>
+            <p class="modal-subtitle">Automatically segment this playlist into separate era collections</p>
+          </div>
+          <button id="closeDecadeModalBtn" class="btn-close">&times;</button>
+        </div>
+
+        <div class="decade-buckets-list" id="decadeBucketsContainer">
+          <!-- Injected via JS -->
+        </div>
+
+        <div id="decadeExportProgressContainer" class="modal-progress-container hidden">
+          <div class="progress-labels">
+            <span id="decadeExportStatus">Generating decade playlists...</span>
+            <span id="decadeExportPercent">0%</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div id="decadeExportProgressBar" class="progress-bar-fill" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" id="cancelDecadeSplitBtn" class="btn btn-ghost">Cancel</button>
+          <button type="button" id="confirmDecadeSplitBtn" class="btn btn-primary btn-glow">
+            Generate Selected Playlists
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SOCIAL STORY CARD MODAL -->
+    <div id="socialCardModal" class="modal-backdrop hidden">
+      <div class="modal-card glass-panel story-modal">
+        <div class="modal-header">
+          <div>
+            <h3>Playlist DNA Story Card</h3>
+            <p class="modal-subtitle">Formatted for Instagram Stories & Twitter sharing</p>
+          </div>
+          <button id="closeSocialModalBtn" class="btn-close">&times;</button>
+        </div>
+
+        <div class="story-card-preview-box">
+          <img id="storyCardPreviewImg" class="story-preview-img" src="" alt="Story Card Preview" />
+        </div>
+
+        <div class="modal-actions story-actions">
+          <button type="button" id="downloadStoryCardBtn" class="btn btn-primary btn-glow btn-lg">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            Download PNG (1080x1920)
+          </button>
+          <button type="button" id="closeStoryModalBtn" class="btn btn-secondary">Close</button>
+        </div>
+      </div>
+    </div>
+
     <!-- SUCCESS MODAL -->
     <div id="successModal" class="modal-backdrop hidden">
       <div class="modal-card glass-panel success-card">
@@ -363,6 +473,10 @@
         <p id="successSummaryText">
           Added <strong>0 songs</strong> to your new Spotify playlist.
         </p>
+
+        <div id="createdPlaylistsLinksList" class="created-links-list hidden">
+          <!-- Injected when multiple decade playlists are created -->
+        </div>
 
         <div class="success-actions">
           <a id="openInSpotifyBtn" href="#" target="_blank" class="btn btn-primary btn-glow btn-lg">
