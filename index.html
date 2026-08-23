@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spotify Retro Playlist Filter — Filter by Release Year</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./src/style.css">
+</head>
+<body class="bg-dark text-light">
+
+  <!-- Floating Background Ambient Light -->
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+
+  <!-- Main App Shell -->
+  <div id="app" class="app-container">
+    
+    <!-- Top Navigation Header -->
+    <header class="app-header">
+      <div class="header-brand">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
+            <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.494 17.308c-.216.353-.674.467-1.027.251-2.812-1.718-6.35-2.107-10.518-1.154-.403.092-.803-.16-.895-.563-.092-.403.16-.803.563-.895 4.567-1.043 8.484-.6 11.626 1.334.353.216.467.674.251 1.027zm1.467-3.26c-.272.441-.852.58-1.293.308-3.22-1.979-8.128-2.551-11.936-1.394-.497.151-1.028-.133-1.179-.63-.151-.497.133-1.028.63-1.179 4.354-1.321 9.775-.68 13.47 1.592.441.272.58.852.308 1.293zm.126-3.41c-3.86-2.293-10.224-2.505-13.889-1.392-.593.18-1.226-.157-1.406-.75-.18-.593.157-1.226.75-1.406 4.215-1.28 11.242-1.033 15.688 1.605.534.317.708 1.01.391 1.544-.317.534-1.01.708-1.544.399z"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">Spotify Retro Filter</span>
+          <span class="brand-badge">Bollywood & Classics</span>
+        </div>
+      </div>
+
+      <!-- User Profile / Auth Status -->
+      <div id="authStatusContainer" class="auth-status-container">
+        <!-- Injected via JS -->
+      </div>
+    </header>
+
+    <!-- SECTION 1: Connect Spotify Account (Shown when not authenticated) -->
+    <section id="authSection" class="card auth-card glass-panel">
+      <div class="auth-card-content">
+        <div class="auth-badge">Instant Client-Side Tool</div>
+        <h1 class="hero-heading">Filter Large Playlists by <span class="highlight-gradient">Release Year</span></h1>
+        <p class="hero-subtext">
+          Scan your entire Bollywood playlist (200+ tracks), extract accurate release years even from remasters, and create a brand-new <strong>Pre-2015 Classics playlist</strong> with one click.
+        </p>
+
+        <div class="setup-guide-box">
+          <h3>Quick 1-Minute Setup</h3>
+          <div class="step-list">
+            <div class="step-item">
+              <span class="step-num">1</span>
+              <span>In Spotify Developer Dashboard, ensure Redirect URI is set to:</span>
+              <code id="currentRedirectUri" class="code-badge">http://localhost:5173/</code>
+              <button id="copyUriBtn" class="btn-sm btn-ghost" title="Copy URI">📋 Copy</button>
+            </div>
+            <div class="step-item">
+              <span class="step-num">2</span>
+              <span>Paste your Spotify <strong>Client ID</strong> below:</span>
+            </div>
+          </div>
+
+          <form id="loginForm" class="client-id-form">
+            <div class="input-wrapper">
+              <input 
+                type="text" 
+                id="clientIdInput" 
+                placeholder="Paste your 32-character Client ID here..." 
+                required 
+                autocomplete="off"
+                spellcheck="false"
+              />
+            </div>
+            <button type="submit" id="connectBtn" class="btn btn-primary btn-glow">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.494 17.308c-.216.353-.674.467-1.027.251-2.812-1.718-6.35-2.107-10.518-1.154-.403.092-.803-.16-.895-.563-.092-.403.16-.803.563-.895 4.567-1.043 8.484-.6 11.626 1.334.353.216.467.674.251 1.027zm1.467-3.26c-.272.441-.852.58-1.293.308-3.22-1.979-8.128-2.551-11.936-1.394-.497.151-1.028-.133-1.179-.63-.151-.497.133-1.028.63-1.179 4.354-1.321 9.775-.68 13.47 1.592.441.272.58.852.308 1.293zm.126-3.41c-3.86-2.293-10.224-2.505-13.889-1.392-.593.18-1.226-.157-1.406-.75-.18-.593.157-1.226.75-1.406 4.215-1.28 11.242-1.033 15.688 1.605.534.317.708 1.01.391 1.544-.317.534-1.01.708-1.544.399z"/></svg>
+              Connect with Spotify
+            </button>
+          </form>
+        </div>
+
+        <div class="auth-security-note">
+          🔒 <strong>100% Private & Secure:</strong> Uses Spotify PKCE OAuth. No client secrets, no backend servers, and zero data leaves your local browser.
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 2: Main Workspace (Shown when authenticated) -->
+    <main id="mainWorkspace" class="main-workspace hidden">
+
+      <!-- Step 1: Select Playlist -->
+      <section class="card glass-panel playlist-selector-card">
+        <div class="card-header-row">
+          <div>
+            <h2 class="card-title">1. Select Your Bollywood Playlist</h2>
+            <p class="card-subtitle">Choose from your library or paste any public/private playlist link</p>
+          </div>
+          <button id="refreshPlaylistsBtn" class="btn-sm btn-ghost" title="Refresh library playlists">
+            🔄 Refresh List
+          </button>
+        </div>
+
+        <div class="playlist-inputs-grid">
+          <!-- Dropdown of User Playlists -->
+          <div class="input-group">
+            <label for="playlistSelect">Your Spotify Playlists</label>
+            <div class="select-wrapper">
+              <select id="playlistSelect">
+                <option value="">-- Choose a playlist from your library --</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="divider-or"><span>OR</span></div>
+
+          <!-- Direct URL / ID Input -->
+          <div class="input-group">
+            <label for="playlistUrlInput">Paste Spotify Playlist Link / URI</label>
+            <div class="url-input-row">
+              <input 
+                type="text" 
+                id="playlistUrlInput" 
+                placeholder="https://open.spotify.com/playlist/... or spotify:playlist:..." 
+              />
+              <button id="loadUrlBtn" class="btn btn-secondary">Load Link</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Progress Loading Indicator for 200+ tracks -->
+        <div id="loadingProgressContainer" class="loading-container hidden">
+          <div class="loading-header">
+            <span id="loadingStatusText">Fetching playlist tracks (0/0)...</span>
+            <span id="loadingPercentText">0%</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div id="loadingProgressBar" class="progress-bar-fill" style="width: 0%"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Step 2: Loaded Playlist Info & Interactive Year Filter Controls -->
+      <div id="filterWorkspace" class="filter-workspace hidden">
+        
+        <!-- Playlist Banner Card -->
+        <div class="card glass-panel playlist-hero-banner">
+          <img id="bannerPlaylistImg" class="playlist-cover-art" src="" alt="Playlist Cover" />
+          <div class="banner-details">
+            <span class="badge badge-spotify">Active Source Playlist</span>
+            <h2 id="bannerPlaylistTitle" class="banner-title">Bollywood Favorites</h2>
+            <p id="bannerPlaylistDesc" class="banner-desc">Curated Bollywood hits</p>
+            <div class="banner-meta">
+              <span id="bannerTotalCount">🎵 240 tracks</span>
+              <span class="meta-dot">•</span>
+              <span id="bannerOwner">By Alfred</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter Control Station -->
+        <section class="card glass-panel filter-station-card">
+          <div class="filter-top-row">
+            <div class="filter-heading-group">
+              <h2 class="card-title">2. Filter Songs by Release Year</h2>
+              <p class="card-subtitle">Set your cutoff year. Songs released on or before will be selected automatically.</p>
+            </div>
+
+            <!-- Era Quick Presets -->
+            <div class="era-presets">
+              <button class="preset-chip active" data-year="2015">✨ Pre-2015 Classics (≤ 2015)</button>
+              <button class="preset-chip" data-year="2010">📻 2000s & 90s (≤ 2010)</button>
+              <button class="preset-chip" data-year="2000">📼 90s & Golden Era (≤ 2000)</button>
+              <button class="preset-chip" data-year="all">🌐 All Tracks</button>
+            </div>
+          </div>
+
+          <!-- Dynamic Year Slider -->
+          <div class="year-slider-box">
+            <div class="slider-labels">
+              <span class="slider-min">Vintage (1960)</span>
+              <div class="active-year-display">
+                Selected Cutoff: <span id="currentSliderYearValue" class="slider-year-val">≤ 2015</span>
+              </div>
+              <span class="slider-max">Recent (2026)</span>
+            </div>
+
+            <div class="range-wrapper">
+              <input 
+                type="range" 
+                id="yearSlider" 
+                min="1960" 
+                max="2026" 
+                value="2015" 
+                step="1"
+                class="custom-slider"
+              />
+            </div>
+          </div>
+
+          <!-- Filter Live Summary Stats -->
+          <div class="filter-stats-bar">
+            <div class="stat-pill stat-included">
+              <span class="stat-icon">✅</span>
+              <span id="statIncludedCount">0</span> tracks included
+            </div>
+            <div class="stat-pill stat-excluded">
+              <span class="stat-icon">⏭️</span>
+              <span id="statExcludedCount">0</span> tracks excluded (> <span id="statExcludedYear">2015</span>)
+            </div>
+            <div class="stat-pill stat-total">
+              <span class="stat-icon">📊</span>
+              <span id="statTotalCount">0</span> total tracks
+            </div>
+          </div>
+
+          <!-- Search & Filter Subbar -->
+          <div class="filter-subbar">
+            <div class="search-input-wrapper">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input type="text" id="trackSearchInput" placeholder="Search track, singer, or album..." />
+            </div>
+
+            <div class="filter-controls-right">
+              <!-- View Filter -->
+              <div class="view-filter-group">
+                <button id="showIncludedOnlyBtn" class="toggle-btn active">Showing: Included Only</button>
+                <button id="showAllTracksBtn" class="toggle-btn">Showing: All Tracks</button>
+              </div>
+
+              <!-- Sorting -->
+              <select id="trackSortSelect" class="sort-select">
+                <option value="original">Original Order</option>
+                <option value="year-asc">Release Year: Oldest First</option>
+                <option value="year-desc">Release Year: Newest First</option>
+                <option value="title-asc">Title: A to Z</option>
+                <option value="artist-asc">Artist: A to Z</option>
+              </select>
+
+              <!-- Quick Selection Actions -->
+              <button id="selectAllBtn" class="btn-sm btn-ghost">Select All</button>
+              <button id="deselectAllBtn" class="btn-sm btn-ghost">Deselect All</button>
+              <button id="resetOverridesBtn" class="btn-sm btn-ghost" title="Reset any manually toggled checkboxes">Reset Toggles</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Step 3: Tracks Table & Review List -->
+        <section class="card glass-panel tracks-list-card">
+          <div class="tracks-list-header">
+            <div class="col-check">
+              <input type="checkbox" id="headerMasterCheckbox" checked title="Select/Deselect all visible" />
+            </div>
+            <div class="col-num">#</div>
+            <div class="col-art">Art</div>
+            <div class="col-title">Title & Artist</div>
+            <div class="col-album">Album / Movie</div>
+            <div class="col-year">Release Year</div>
+            <div class="col-status">Status</div>
+            <div class="col-preview">Preview</div>
+          </div>
+
+          <div id="tracksTableBody" class="tracks-table-body">
+            <!-- Dynamic Song Rows Injected via JS -->
+          </div>
+
+          <!-- Empty State if no tracks match search -->
+          <div id="noTracksState" class="empty-state hidden">
+            <p>No tracks match your current filter or search criteria.</p>
+          </div>
+        </section>
+
+        <!-- Sticky Floating Export Bar -->
+        <div class="floating-export-bar glass-panel">
+          <div class="export-summary">
+            <div class="export-count-highlight">
+              <span id="exportTrackCount">0</span> songs selected
+            </div>
+            <span class="export-hint">Will be added to your new Spotify playlist</span>
+          </div>
+
+          <button id="openExportModalBtn" class="btn btn-primary btn-glow btn-lg">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+            </svg>
+            Export to Spotify Playlist
+          </button>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- EXPORT PLAYLIST MODAL -->
+    <div id="exportModal" class="modal-backdrop hidden">
+      <div class="modal-card glass-panel">
+        <div class="modal-header">
+          <h3>Create New Spotify Playlist</h3>
+          <button id="closeModalBtn" class="btn-close">✕</button>
+        </div>
+
+        <form id="exportForm" class="modal-form">
+          <div class="input-group">
+            <label for="exportPlaylistName">Playlist Name</label>
+            <input 
+              type="text" 
+              id="exportPlaylistName" 
+              required 
+              value="Bollywood (≤ 2015 Retro Classics)" 
+            />
+          </div>
+
+          <div class="input-group">
+            <label for="exportPlaylistDesc">Description</label>
+            <textarea 
+              id="exportPlaylistDesc" 
+              rows="3"
+            >Curated collection of vintage and classic Bollywood tracks released on or before 2015. Generated with Spotify Retro Filter.</textarea>
+          </div>
+
+          <div class="input-group checkbox-group">
+            <label class="custom-checkbox-label">
+              <input type="checkbox" id="exportPlaylistPublic" checked />
+              <span>Make playlist Public</span>
+            </label>
+          </div>
+
+          <div class="modal-stats-card">
+            <div><strong>Tracks to Export:</strong> <span id="modalExportCount">0</span> songs</div>
+            <div><strong>Target Account:</strong> <span id="modalAccountName">Spotify User</span></div>
+          </div>
+
+          <!-- Progress Bar inside modal -->
+          <div id="exportProgressContainer" class="modal-progress-container hidden">
+            <div class="progress-labels">
+              <span id="exportProgressStatus">Creating playlist & adding songs...</span>
+              <span id="exportProgressPercent">0%</span>
+            </div>
+            <div class="progress-bar-bg">
+              <div id="exportProgressBar" class="progress-bar-fill" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" id="cancelExportBtn" class="btn btn-ghost">Cancel</button>
+            <button type="submit" id="confirmExportBtn" class="btn btn-primary btn-glow">
+              🚀 Create & Export Playlist
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- SUCCESS CELEBRATION MODAL -->
+    <div id="successModal" class="modal-backdrop hidden">
+      <div class="modal-card glass-panel success-card">
+        <div class="success-icon-badge">🎉</div>
+        <h2>Playlist Created Successfully!</h2>
+        <p id="successSummaryText">
+          Added <strong>142 songs</strong> to your new Spotify playlist.
+        </p>
+
+        <div class="success-actions">
+          <a id="openInSpotifyBtn" href="#" target="_blank" class="btn btn-primary btn-glow btn-lg">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.494 17.308c-.216.353-.674.467-1.027.251-2.812-1.718-6.35-2.107-10.518-1.154-.403.092-.803-.16-.895-.563-.092-.403.16-.803.563-.895 4.567-1.043 8.484-.6 11.626 1.334.353.216.467.674.251 1.027zm1.467-3.26c-.272.441-.852.58-1.293.308-3.22-1.979-8.128-2.551-11.936-1.394-.497.151-1.028-.133-1.179-.63-.151-.497.133-1.028.63-1.179 4.354-1.321 9.775-.68 13.47 1.592.441.272.58.852.308 1.293zm.126-3.41c-3.86-2.293-10.224-2.505-13.889-1.392-.593.18-1.226-.157-1.406-.75-.18-.593.157-1.226.75-1.406 4.215-1.28 11.242-1.033 15.688 1.605.534.317.708 1.01.391 1.544-.317.534-1.01.708-1.544.399z"/></svg>
+            Open in Spotify
+          </a>
+          <button id="closeSuccessBtn" class="btn btn-secondary">Done</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hidden Audio Player for 30s previews -->
+    <audio id="audioPreviewPlayer"></audio>
+
+  </div>
+
+  <script type="module" src="./src/app.js"></script>
+</body>
+</html>
