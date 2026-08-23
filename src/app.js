@@ -208,17 +208,26 @@ async function loadUserPlaylists() {
     elements.refreshPlaylistsBtn.textContent = 'Loading...';
     state.playlists = await fetchUserPlaylists(state.token);
     
-    elements.playlistSelect.innerHTML = '<option value="">-- Choose a playlist from your library --</option>';
+    elements.playlistSelect.innerHTML = '<option value="">-- Choose a playlist created by you --</option>';
     
-    state.playlists.forEach(pl => {
-      const opt = document.createElement('option');
-      opt.value = pl.id;
-      const count = pl.tracks?.total;
-      opt.textContent = count !== undefined && count !== null 
-        ? `${pl.name} (${count} tracks)` 
-        : pl.name;
-      elements.playlistSelect.appendChild(opt);
+    // Only display playlists created/owned by the logged-in user
+    const myPlaylists = state.playlists.filter(pl => {
+      return !pl.owner || !state.user || pl.owner.id === state.user.id;
     });
+
+    if (myPlaylists.length === 0) {
+      elements.playlistSelect.innerHTML = '<option value="">No playlists created by your account found</option>';
+    } else {
+      myPlaylists.forEach(pl => {
+        const opt = document.createElement('option');
+        opt.value = pl.id;
+        const count = pl.tracks?.total ?? pl.total;
+        opt.textContent = count !== undefined && count !== null 
+          ? `${pl.name} (${count} tracks)` 
+          : pl.name;
+        elements.playlistSelect.appendChild(opt);
+      });
+    }
 
     elements.refreshPlaylistsBtn.textContent = 'Refresh';
   } catch (err) {

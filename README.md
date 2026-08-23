@@ -22,7 +22,7 @@ You can use the tool directly in your browser without installing any software:
    - Paste your Spotify **Client ID** (see [Spotify Developer Setup](#spotify-developer-setup) below for the 1-minute free setup).
    - Click **Connect with Spotify** and authorize the application.
 3. **Select and Filter**:
-   - Choose any playlist from your library dropdown or paste any Spotify playlist link.
+   - Choose any playlist created by your account from the dropdown or paste your playlist link.
    - The application scans all tracks and automatically detects album release years (including smart detection for movie soundtracks and compilation albums).
    - Adjust the **Year Cutoff Slider** (e.g. `<= 2015`) or select a preset era (`Pre-2015 Classics`, `2000s & 90s`, `Golden Era`).
    - Review tracks in the table, preview audio clips, and manually toggle individual songs if needed.
