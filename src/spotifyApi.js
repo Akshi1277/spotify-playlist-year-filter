@@ -259,6 +259,13 @@ export async function fetchAllPlaylistTracks(token, playlistId, onProgress = nul
       try {
         data = await spotifyFetch(nextUrl, token);
       } catch (fetchErr) {
+        if (fetchErr.message && fetchErr.message.includes('Forbidden')) {
+          if (playlistInfo.owner && playlistInfo.owner !== 'Spotify User') {
+            throw new Error(`Access restricted by Spotify: This playlist is owned by "${playlistInfo.owner}". In Development Mode, Spotify requires adding their Spotify account email to the "User Management" tab in your Spotify Developer Dashboard.`);
+          }
+          throw fetchErr;
+        }
+
         if (nextUrl.includes('/tracks')) {
           const fallbackUrl = nextUrl.replace('/tracks', '/items');
           console.warn(`Fetch ${nextUrl} failed, trying fallback ${fallbackUrl}...`);
@@ -288,7 +295,7 @@ export async function fetchAllPlaylistTracks(token, playlistId, onProgress = nul
       nextUrl = getNextUrl(data);
     } catch (err) {
       console.warn('Pagination query error:', err);
-      break;
+      throw err;
     }
   }
 
