@@ -1,7 +1,8 @@
 /**
- * Main Application Controller — Multi-Dimensional Playlist Studio
- * Handles Year/Era windows, Artist Matrix selection, Popularity (Hidden Gems),
- * Duration & Cleanliness filters, Timeline analytics, 1-Click Decade & Artist Splitters.
+ * Main Application Controller — Progressive Disclosure Playlist Studio
+ * Combines a calm, Linear-style guided UI with powerful on-demand filtering:
+ * Year/Era window, Artist Matrix, Popularity/Hidden Gems, Duration & Cleanliness,
+ * 1-Click Decade & Artist Splitters.
  */
 
 import { 
@@ -47,7 +48,6 @@ const state = {
   maxPopularity: 100,
   durationFilter: 'all', // 'all' | 'short' | 'medium' | 'long'
   explicitFilter: 'all', // 'all' | 'clean' | 'explicit'
-  activePurposePreset: 'all',
   
   // Artist Metadata
   uniqueArtists: [], // { name: string, count: number }
@@ -61,6 +61,7 @@ const state = {
   currentlyPlayingId: null,
   isLoadingPlaylist: false,
   isExporting: false,
+  isChartVisible: false,
   socialCardDataUrl: null,
   decadeSplitBuckets: [],
   artistSplitBuckets: []
@@ -76,7 +77,8 @@ const elements = {
   currentRedirectUri: document.getElementById('currentRedirectUri'),
   copyUriBtn: document.getElementById('copyUriBtn'),
 
-  // Workspace Elements
+  // Playlist Selector Card
+  playlistSelectorCard: document.getElementById('playlistSelectorCard'),
   playlistSelect: document.getElementById('playlistSelect'),
   playlistUrlInput: document.getElementById('playlistUrlInput'),
   loadUrlBtn: document.getElementById('loadUrlBtn'),
@@ -88,34 +90,28 @@ const elements = {
   loadingStatusText: document.getElementById('loadingStatusText'),
   loadingPercentText: document.getElementById('loadingPercentText'),
 
-  // Filter Workspace & Banner
+  // Filter Workspace & Compact Banner
   filterWorkspace: document.getElementById('filterWorkspace'),
   bannerPlaylistImg: document.getElementById('bannerPlaylistImg'),
   bannerPlaylistTitle: document.getElementById('bannerPlaylistTitle'),
-  bannerPlaylistDesc: document.getElementById('bannerPlaylistDesc'),
   bannerTotalCount: document.getElementById('bannerTotalCount'),
   bannerOwner: document.getElementById('bannerOwner'),
+  togglePlaylistSelectBtn: document.getElementById('togglePlaylistSelectBtn'),
+  toggleChartBtn: document.getElementById('toggleChartBtn'),
+  chartToggleLabel: document.getElementById('chartToggleLabel'),
+  actionsMenuBtn: document.getElementById('actionsMenuBtn'),
+  actionsDropdownMenu: document.getElementById('actionsDropdownMenu'),
 
   // Power Actions
   openDecadeSplitterBtn: document.getElementById('openDecadeSplitterBtn'),
   openArtistSplitterBtn: document.getElementById('openArtistSplitterBtn'),
   openSocialCardBtn: document.getElementById('openSocialCardBtn'),
 
-  // Timeline Chart
+  // Collapsible Timeline Chart Drawer
+  timelineChartDrawer: document.getElementById('timelineChartDrawer'),
   timelineChartCanvas: document.getElementById('timelineChartCanvas'),
 
-  // Purpose Presets
-  purposePresetButtons: document.querySelectorAll('.purpose-preset-chip'),
-
-  // Filter Studio Tabs
-  filterTabButtons: document.querySelectorAll('.filter-tab-btn'),
-  tabPaneEra: document.getElementById('tabPaneEra'),
-  tabPaneArtists: document.getElementById('tabPaneArtists'),
-  tabPaneAttributes: document.getElementById('tabPaneAttributes'),
-  artistFilterCountBadge: document.getElementById('artistFilterCountBadge'),
-  attributesFilterCountBadge: document.getElementById('attributesFilterCountBadge'),
-
-  // Era Tab Elements
+  // Primary Era Slider Elements
   minYearSlider: document.getElementById('minYearSlider'),
   maxYearSlider: document.getElementById('maxYearSlider'),
   dualSliderHighlight: document.getElementById('dualSliderHighlight'),
@@ -124,26 +120,30 @@ const elements = {
   activeRangeSummary: document.getElementById('activeRangeSummary'),
   eraPresetButtons: document.querySelectorAll('.preset-chip'),
 
-  // Artist Tab Elements
+  // Progressive Linear-Style Filter Pills
+  toggleArtistDrawerBtn: document.getElementById('toggleArtistDrawerBtn'),
+  artistFilterLabel: document.getElementById('artistFilterLabel'),
+  artistFilterDrawer: document.getElementById('artistFilterDrawer'),
+  togglePopDrawerBtn: document.getElementById('togglePopDrawerBtn'),
+  popFilterLabel: document.getElementById('popFilterLabel'),
+  popFilterDrawer: document.getElementById('popFilterDrawer'),
+  toggleCleanBtn: document.getElementById('toggleCleanBtn'),
+  toggleShortBtn: document.getElementById('toggleShortBtn'),
+  resetAllFiltersBtn: document.getElementById('resetAllFiltersBtn'),
+
+  // Artist Drawer Elements
   artistFilterSearchInput: document.getElementById('artistFilterSearchInput'),
   artistSelectAllBtn: document.getElementById('artistSelectAllBtn'),
   artistTop5Btn: document.getElementById('artistTop5Btn'),
   artistClearBtn: document.getElementById('artistClearBtn'),
   artistChipsGrid: document.getElementById('artistChipsGrid'),
 
-  // Attributes Tab Elements
+  // Popularity Drawer Elements
   popularityValueDisplay: document.getElementById('popularityValueDisplay'),
   minPopSlider: document.getElementById('minPopSlider'),
   maxPopSlider: document.getElementById('maxPopSlider'),
   popSliderHighlight: document.getElementById('popSliderHighlight'),
   popPresetButtons: document.querySelectorAll('.pop-preset-btn'),
-  durationOptions: document.querySelectorAll('#durationSegmentedControl .segmented-option'),
-  explicitOptions: document.querySelectorAll('#explicitSegmentedControl .segmented-option'),
-
-  // Stats
-  statIncludedCount: document.getElementById('statIncludedCount'),
-  statExcludedCount: document.getElementById('statExcludedCount'),
-  statTotalCount: document.getElementById('statTotalCount'),
 
   // Search and Sort
   trackSearchInput: document.getElementById('trackSearchInput'),
@@ -152,7 +152,6 @@ const elements = {
   trackSortSelect: document.getElementById('trackSortSelect'),
   selectAllBtn: document.getElementById('selectAllBtn'),
   deselectAllBtn: document.getElementById('deselectAllBtn'),
-  resetOverridesBtn: document.getElementById('resetOverridesBtn'),
 
   // Table
   headerMasterCheckbox: document.getElementById('headerMasterCheckbox'),
@@ -346,7 +345,6 @@ async function loadPlaylistTracks(playlistId) {
   state.maxPopularity = 100;
   state.durationFilter = 'all';
   state.explicitFilter = 'all';
-  state.activePurposePreset = 'all';
 
   elements.loadingProgressContainer.classList.remove('hidden');
   elements.loadingProgressBar.style.width = '0%';
@@ -355,7 +353,7 @@ async function loadPlaylistTracks(playlistId) {
 
   try {
     const result = await fetchAllPlaylistTracks(state.token, playlistId, (progress) => {
-      elements.loadingStatusText.textContent = `Scanning & analyzing tracks (${progress.fetched} of ${progress.total})...`;
+      elements.loadingStatusText.textContent = `Scanning tracks (${progress.fetched} of ${progress.total})...`;
       elements.loadingPercentText.textContent = `${progress.percent}%`;
       elements.loadingProgressBar.style.width = `${progress.percent}%`;
     });
@@ -363,10 +361,9 @@ async function loadPlaylistTracks(playlistId) {
     state.activePlaylistInfo = result.playlistInfo;
     state.allTracks = result.tracks;
 
-    // Render playlist banner
+    // Render compact banner
     elements.bannerPlaylistImg.src = state.activePlaylistInfo.image || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=200&auto=format&fit=crop&q=80';
     elements.bannerPlaylistTitle.textContent = state.activePlaylistInfo.name;
-    elements.bannerPlaylistDesc.textContent = state.activePlaylistInfo.description || 'No description';
     elements.bannerTotalCount.textContent = `${state.allTracks.length} tracks`;
     elements.bannerOwner.textContent = `By ${state.activePlaylistInfo.owner}`;
 
@@ -374,12 +371,14 @@ async function loadPlaylistTracks(playlistId) {
     aggregatePlaylistArtists(state.allTracks);
     renderArtistChips();
 
+    // Hide the bulky playlist selector to free up screen space (Progressive Disclosure)
+    elements.playlistSelectorCard.classList.add('hidden');
     elements.filterWorkspace.classList.remove('hidden');
     elements.loadingProgressContainer.classList.add('hidden');
 
     updateDualSliderUI();
     updatePopSliderUI();
-    updateAttributeBadges();
+    updateFilterPillStates();
     applyFiltersAndRender();
   } catch (err) {
     console.error('Failed to load playlist tracks:', err);
@@ -390,7 +389,7 @@ async function loadPlaylistTracks(playlistId) {
   }
 }
 
-// Extract and aggregate all contributing artists
+// Extract and aggregate contributing artists
 function aggregatePlaylistArtists(tracks) {
   const counts = new Map();
 
@@ -436,7 +435,7 @@ function renderArtistChips() {
         state.selectedArtists.add(artist.name);
       }
       chip.classList.toggle('selected', state.selectedArtists.has(artist.name));
-      updateAttributeBadges();
+      updateFilterPillStates();
       applyFiltersAndRender();
     });
     fragment.appendChild(chip);
@@ -447,7 +446,7 @@ function renderArtistChips() {
 
 // Multi-Dimensional Inclusion Predicate
 function isTrackIncluded(track) {
-  // 1. Manual user checkbox override always takes highest priority
+  // 1. Manual user override
   if (state.manualOverrides.has(track.id)) {
     return state.manualOverrides.get(track.id);
   }
@@ -460,7 +459,7 @@ function isTrackIncluded(track) {
     }
   }
 
-  // 3. Artist Filter (If any artists selected, track must match at least one)
+  // 3. Artist Filter
   if (state.selectedArtists.size > 0) {
     const trackArtistNames = (track.artists || '').split(',').map(n => n.trim());
     const matchesArtist = trackArtistNames.some(name => state.selectedArtists.has(name));
@@ -480,10 +479,10 @@ function isTrackIncluded(track) {
   if (state.durationFilter === 'short' && durMs > 195000) { // > 3:15 min
     return false;
   }
-  if (state.durationFilter === 'medium' && (durMs < 180000 || durMs > 300000)) { // not between 3:00 and 5:00 min
+  if (state.durationFilter === 'medium' && (durMs < 180000 || durMs > 300000)) {
     return false;
   }
-  if (state.durationFilter === 'long' && durMs < 300000) { // < 5:00 min
+  if (state.durationFilter === 'long' && durMs < 300000) {
     return false;
   }
 
@@ -545,32 +544,55 @@ function updatePopSliderUI() {
   }
 }
 
-function updateAttributeBadges() {
-  // Artist tab badge
-  if (elements.artistFilterCountBadge) {
-    const artistCount = state.selectedArtists.size;
-    if (artistCount > 0) {
-      elements.artistFilterCountBadge.textContent = `${artistCount}`;
-      elements.artistFilterCountBadge.classList.remove('hidden');
-    } else {
-      elements.artistFilterCountBadge.classList.add('hidden');
-    }
+// Update Linear-style filter pill states and labels
+function updateFilterPillStates() {
+  // Artist Pill
+  if (state.selectedArtists.size > 0) {
+    elements.toggleArtistDrawerBtn.classList.add('active');
+    const firstArtist = Array.from(state.selectedArtists)[0];
+    const moreCount = state.selectedArtists.size - 1;
+    elements.artistFilterLabel.textContent = moreCount > 0 
+      ? `Artist: ${firstArtist} +${moreCount}` 
+      : `Artist: ${firstArtist}`;
+  } else {
+    elements.toggleArtistDrawerBtn.classList.remove('active');
+    elements.artistFilterLabel.textContent = '+ Artist';
   }
 
-  // Attributes tab badge
-  if (elements.attributesFilterCountBadge) {
-    let attrCount = 0;
-    if (state.minPopularity > 0 || state.maxPopularity < 100) attrCount++;
-    if (state.durationFilter !== 'all') attrCount++;
-    if (state.explicitFilter !== 'all') attrCount++;
-
-    if (attrCount > 0) {
-      elements.attributesFilterCountBadge.textContent = `${attrCount}`;
-      elements.attributesFilterCountBadge.classList.remove('hidden');
+  // Popularity Pill
+  if (state.minPopularity > 0 || state.maxPopularity < 100) {
+    elements.togglePopDrawerBtn.classList.add('active');
+    if (state.maxPopularity <= 35) {
+      elements.popFilterLabel.textContent = 'Pop: Hidden Gems (≤ 35)';
+    } else if (state.minPopularity >= 70) {
+      elements.popFilterLabel.textContent = 'Pop: Chart Hits (≥ 70)';
     } else {
-      elements.attributesFilterCountBadge.classList.add('hidden');
+      elements.popFilterLabel.textContent = `Pop: ${state.minPopularity}–${state.maxPopularity}`;
     }
+  } else {
+    elements.togglePopDrawerBtn.classList.remove('active');
+    elements.popFilterLabel.textContent = '+ Popularity / Hidden Gems';
   }
+
+  // Clean Only Pill
+  elements.toggleCleanBtn.classList.toggle('active', state.explicitFilter === 'clean');
+  elements.toggleCleanBtn.querySelector('span').textContent = state.explicitFilter === 'clean' 
+    ? 'Clean Only ✓' 
+    : '+ Clean Only';
+
+  // Short Tracks Pill
+  elements.toggleShortBtn.classList.toggle('active', state.durationFilter === 'short');
+  elements.toggleShortBtn.querySelector('span').textContent = state.durationFilter === 'short' 
+    ? 'Short (< 3m) ✓' 
+    : '+ Short (< 3m)';
+
+  // Reset button visibility
+  const hasExtraFilters = state.selectedArtists.size > 0 || 
+    state.minPopularity > 0 || 
+    state.maxPopularity < 100 || 
+    state.explicitFilter !== 'all' || 
+    state.durationFilter !== 'all';
+  elements.resetAllFiltersBtn?.classList.toggle('hidden', !hasExtraFilters);
 }
 
 function applyFiltersAndRender() {
@@ -633,18 +655,15 @@ function applyFiltersAndRender() {
     return a.index - b.index;
   });
 
-  // Update UI Stats
-  elements.statIncludedCount.textContent = includedCount;
-  elements.statExcludedCount.textContent = excludedCount;
-  elements.statTotalCount.textContent = state.allTracks.length;
+  // Update Stats & Counters
   elements.exportTrackCount.textContent = includedCount;
   elements.modalExportCount.textContent = includedCount;
 
   // Render Table Rows
   renderTracksTable(displayTracks);
 
-  // Render Decade Timeline Chart
-  if (elements.timelineChartCanvas) {
+  // Render Timeline Chart (if visible)
+  if (state.isChartVisible && elements.timelineChartCanvas) {
     renderDecadeChart(elements.timelineChartCanvas, state.allTracks, state.minYear, state.maxYear);
   }
 }
@@ -715,7 +734,6 @@ function renderTracksTable(tracks) {
 
   elements.tracksTableBody.appendChild(fragment);
 
-  // Update master checkbox state
   const visibleCheckboxes = elements.tracksTableBody.querySelectorAll('.track-checkbox');
   const allChecked = Array.from(visibleCheckboxes).every(cb => cb.checked);
   elements.headerMasterCheckbox.checked = visibleCheckboxes.length > 0 && allChecked;
@@ -816,76 +834,70 @@ function setupEventListeners() {
     loadUserPlaylists();
   });
 
-  // Filter Studio Tabs Switcher
-  elements.filterTabButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      elements.filterTabButtons.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-
-      const targetTab = btn.dataset.tab;
-      elements.tabPaneEra.classList.toggle('hidden', targetTab !== 'era');
-      elements.tabPaneEra.classList.toggle('active', targetTab === 'era');
-      elements.tabPaneArtists.classList.toggle('hidden', targetTab !== 'artists');
-      elements.tabPaneArtists.classList.toggle('active', targetTab === 'artists');
-      elements.tabPaneAttributes.classList.toggle('hidden', targetTab !== 'attributes');
-      elements.tabPaneAttributes.classList.toggle('active', targetTab === 'attributes');
-    });
+  // Switch Playlist Button (Toggles selector card)
+  elements.togglePlaylistSelectBtn?.addEventListener('click', () => {
+    elements.playlistSelectorCard.classList.toggle('hidden');
   });
 
-  // Purpose Presets
-  elements.purposePresetButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      elements.purposePresetButtons.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
+  // Toggle Timeline Analytics Chart Drawer
+  elements.toggleChartBtn?.addEventListener('click', () => {
+    state.isChartVisible = !state.isChartVisible;
+    elements.timelineChartDrawer.classList.toggle('hidden', !state.isChartVisible);
+    elements.chartToggleLabel.textContent = state.isChartVisible ? 'Hide Chart' : 'Show Chart';
+    if (state.isChartVisible && elements.timelineChartCanvas) {
+      renderDecadeChart(elements.timelineChartCanvas, state.allTracks, state.minYear, state.maxYear);
+    }
+  });
 
-      const preset = btn.dataset.preset;
-      state.activePurposePreset = preset;
+  // Tools Actions Dropdown Menu
+  elements.actionsMenuBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    elements.actionsDropdownMenu.classList.toggle('hidden');
+  });
 
-      if (preset === 'all') {
-        state.isAllEraSelected = true;
-        state.minYear = 1960;
-        state.maxYear = 2026;
-        state.minPopularity = 0;
-        state.maxPopularity = 100;
-        state.durationFilter = 'all';
-        state.explicitFilter = 'all';
-        state.selectedArtists.clear();
-      } else if (preset === 'hidden-gems') {
-        state.minPopularity = 0;
-        state.maxPopularity = 35;
-      } else if (preset === 'chart-toppers') {
-        state.minPopularity = 70;
-        state.maxPopularity = 100;
-      } else if (preset === 'clean-classics') {
-        state.minYear = 1960;
-        state.maxYear = 2015;
-        state.isAllEraSelected = false;
-        state.explicitFilter = 'clean';
-      } else if (preset === 'fast-paced') {
-        state.durationFilter = 'short';
-        state.minPopularity = 30;
-      }
+  document.addEventListener('click', (e) => {
+    if (!elements.actionsMenuBtn?.contains(e.target) && !elements.actionsDropdownMenu?.contains(e.target)) {
+      elements.actionsDropdownMenu?.classList.add('hidden');
+    }
+  });
 
-      // Sync UI sliders & inputs
-      elements.minYearSlider.value = state.minYear;
-      elements.maxYearSlider.value = state.maxYear;
-      elements.minPopSlider.value = state.minPopularity;
-      elements.maxPopSlider.value = state.maxPopularity;
+  // Progressive Filter Pills Drawer Toggles
+  elements.toggleArtistDrawerBtn?.addEventListener('click', () => {
+    elements.artistFilterDrawer.classList.toggle('hidden');
+    elements.popFilterDrawer.classList.add('hidden');
+  });
 
-      // Sync segmented controls
-      elements.durationOptions.forEach(opt => {
-        opt.classList.toggle('active', opt.dataset.duration === state.durationFilter);
-      });
-      elements.explicitOptions.forEach(opt => {
-        opt.classList.toggle('active', opt.dataset.explicit === state.explicitFilter);
-      });
+  elements.togglePopDrawerBtn?.addEventListener('click', () => {
+    elements.popFilterDrawer.classList.toggle('hidden');
+    elements.artistFilterDrawer.classList.add('hidden');
+  });
 
-      renderArtistChips();
-      updateDualSliderUI();
-      updatePopSliderUI();
-      updateAttributeBadges();
-      applyFiltersAndRender();
-    });
+  elements.toggleCleanBtn?.addEventListener('click', () => {
+    state.explicitFilter = state.explicitFilter === 'clean' ? 'all' : 'clean';
+    updateFilterPillStates();
+    applyFiltersAndRender();
+  });
+
+  elements.toggleShortBtn?.addEventListener('click', () => {
+    state.durationFilter = state.durationFilter === 'short' ? 'all' : 'short';
+    updateFilterPillStates();
+    applyFiltersAndRender();
+  });
+
+  elements.resetAllFiltersBtn?.addEventListener('click', () => {
+    state.selectedArtists.clear();
+    state.minPopularity = 0;
+    state.maxPopularity = 100;
+    state.explicitFilter = 'all';
+    state.durationFilter = 'all';
+    elements.minPopSlider.value = 0;
+    elements.maxPopSlider.value = 100;
+    elements.artistFilterDrawer.classList.add('hidden');
+    elements.popFilterDrawer.classList.add('hidden');
+    renderArtistChips();
+    updatePopSliderUI();
+    updateFilterPillStates();
+    applyFiltersAndRender();
   });
 
   // Dual Range Year Sliders
@@ -922,7 +934,7 @@ function setupEventListeners() {
     }
     state.minPopularity = val;
     updatePopSliderUI();
-    updateAttributeBadges();
+    updateFilterPillStates();
     applyFiltersAndRender();
   });
 
@@ -934,7 +946,7 @@ function setupEventListeners() {
     }
     state.maxPopularity = val;
     updatePopSliderUI();
-    updateAttributeBadges();
+    updateFilterPillStates();
     applyFiltersAndRender();
   });
 
@@ -950,29 +962,7 @@ function setupEventListeners() {
       elements.maxPopSlider.value = state.maxPopularity;
 
       updatePopSliderUI();
-      updateAttributeBadges();
-      applyFiltersAndRender();
-    });
-  });
-
-  // Duration Segmented Control
-  elements.durationOptions.forEach(opt => {
-    opt.addEventListener('click', () => {
-      elements.durationOptions.forEach(o => o.classList.remove('active'));
-      opt.classList.add('active');
-      state.durationFilter = opt.dataset.duration;
-      updateAttributeBadges();
-      applyFiltersAndRender();
-    });
-  });
-
-  // Explicit Segmented Control
-  elements.explicitOptions.forEach(opt => {
-    opt.addEventListener('click', () => {
-      elements.explicitOptions.forEach(o => o.classList.remove('active'));
-      opt.classList.add('active');
-      state.explicitFilter = opt.dataset.explicit;
-      updateAttributeBadges();
+      updateFilterPillStates();
       applyFiltersAndRender();
     });
   });
@@ -987,7 +977,7 @@ function setupEventListeners() {
   elements.artistSelectAllBtn?.addEventListener('click', () => {
     state.uniqueArtists.forEach(a => state.selectedArtists.add(a.name));
     renderArtistChips();
-    updateAttributeBadges();
+    updateFilterPillStates();
     applyFiltersAndRender();
   });
 
@@ -995,14 +985,14 @@ function setupEventListeners() {
     state.selectedArtists.clear();
     state.uniqueArtists.slice(0, 5).forEach(a => state.selectedArtists.add(a.name));
     renderArtistChips();
-    updateAttributeBadges();
+    updateFilterPillStates();
     applyFiltersAndRender();
   });
 
   elements.artistClearBtn?.addEventListener('click', () => {
     state.selectedArtists.clear();
     renderArtistChips();
-    updateAttributeBadges();
+    updateFilterPillStates();
     applyFiltersAndRender();
   });
 
@@ -1115,32 +1105,6 @@ function setupEventListeners() {
     applyFiltersAndRender();
   });
 
-  elements.resetOverridesBtn?.addEventListener('click', () => {
-    state.manualOverrides.clear();
-    state.selectedArtists.clear();
-    state.minYear = 1960;
-    state.maxYear = 2015;
-    state.isAllEraSelected = false;
-    state.minPopularity = 0;
-    state.maxPopularity = 100;
-    state.durationFilter = 'all';
-    state.explicitFilter = 'all';
-
-    elements.minYearSlider.value = 1960;
-    elements.maxYearSlider.value = 2015;
-    elements.minPopSlider.value = 0;
-    elements.maxPopSlider.value = 100;
-
-    elements.durationOptions.forEach(opt => opt.classList.toggle('active', opt.dataset.duration === 'all'));
-    elements.explicitOptions.forEach(opt => opt.classList.toggle('active', opt.dataset.explicit === 'all'));
-
-    renderArtistChips();
-    updateDualSliderUI();
-    updatePopSliderUI();
-    updateAttributeBadges();
-    applyFiltersAndRender();
-  });
-
   // Open Export Modal with Dynamic Purpose Naming
   elements.openExportModalBtn?.addEventListener('click', () => {
     const includedTracks = state.allTracks.filter(t => isTrackIncluded(t));
@@ -1201,6 +1165,7 @@ function setupEventListeners() {
 
   // Open Decade Splitter Modal
   elements.openDecadeSplitterBtn?.addEventListener('click', () => {
+    elements.actionsDropdownMenu.classList.add('hidden');
     if (!state.allTracks || state.allTracks.length === 0) {
       alert('Please load a playlist first.');
       return;
@@ -1219,6 +1184,7 @@ function setupEventListeners() {
 
   // Open Artist Splitter Modal
   elements.openArtistSplitterBtn?.addEventListener('click', () => {
+    elements.actionsDropdownMenu.classList.add('hidden');
     if (!state.allTracks || state.allTracks.length === 0) {
       alert('Please load a playlist first.');
       return;
@@ -1241,6 +1207,7 @@ function setupEventListeners() {
 
   // Open Social Story Card Modal
   elements.openSocialCardBtn?.addEventListener('click', () => {
+    elements.actionsDropdownMenu.classList.add('hidden');
     if (!state.allTracks || state.allTracks.length === 0) {
       alert('Please load a playlist first.');
       return;
