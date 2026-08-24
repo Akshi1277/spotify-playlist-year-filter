@@ -445,6 +445,10 @@
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
                 Decade Splitter
               </button>
+              <button id="openArtistSplitterBtn" class="btn btn-secondary btn-sm" title="Split playlist by top contributing artists">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                Artist Splitter
+              </button>
               <button id="openSocialCardBtn" class="btn btn-secondary btn-sm" title="Generate Story Card graphic">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
                 Share Story Card
@@ -468,62 +472,183 @@
           </div>
         </section>
 
-        <!-- Filter Control Station with Dual-Range Slider -->
+        <!-- Multi-Dimensional Filter Studio Card -->
         <section class="card double-bezel filter-station-card">
           <div class="bezel-inner">
-            <div class="filter-top-row">
-              <div class="filter-heading-group">
-                <h2 class="card-title">Filter by Release Year Window</h2>
-                <p class="card-subtitle">Set your minimum and maximum release years to isolate specific era brackets.</p>
-              </div>
-
-              <!-- Era Quick Presets -->
-              <div class="era-presets">
-                <button class="preset-chip active" data-min="1960" data-max="2015">Pre-2015 Classics (&le; 2015)</button>
-                <button class="preset-chip" data-min="2000" data-max="2009">2000s Nostalgia (2000-2009)</button>
-                <button class="preset-chip" data-min="1990" data-max="1999">Pure 90s (1990-1999)</button>
-                <button class="preset-chip" data-min="1960" data-max="2000">Golden Era (&le; 2000)</button>
-                <button class="preset-chip" data-min="1960" data-max="2026" data-all="true">All Tracks</button>
+            
+            <!-- Purpose-Driven Quick Presets Bar -->
+            <div class="purpose-presets-wrapper">
+              <span class="purpose-presets-label">Quick Purpose Presets:</span>
+              <div class="purpose-presets-bar">
+                <button class="purpose-preset-chip active" data-preset="all">All Tracks</button>
+                <button class="purpose-preset-chip" data-preset="hidden-gems">Hidden Gems (&le; 35 Pop)</button>
+                <button class="purpose-preset-chip" data-preset="chart-toppers">Chart Toppers (&ge; 70 Pop)</button>
+                <button class="purpose-preset-chip" data-preset="clean-classics">Clean Classics (&le; 2015)</button>
+                <button class="purpose-preset-chip" data-preset="fast-paced">Fast-Paced (&lt; 3:15)</button>
               </div>
             </div>
 
-            <!-- Dual-Thumb Range Slider Box -->
-            <div class="dual-range-box">
-              <div class="range-values-display">
-                <div class="range-val-badge">
-                  <span>From:</span>
-                  <strong id="displayMinYear">1960</strong>
+            <!-- Filter Studio Navigation Tabs -->
+            <div class="filter-studio-tabs">
+              <button class="filter-tab-btn active" data-tab="era">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                <span>Era & Release Year</span>
+              </button>
+              <button class="filter-tab-btn" data-tab="artists">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                <span>Artist Matrix</span>
+                <span id="artistFilterCountBadge" class="tab-badge-pill hidden">0</span>
+              </button>
+              <button class="filter-tab-btn" data-tab="attributes">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
+                <span>Attributes & Mood</span>
+                <span id="attributesFilterCountBadge" class="tab-badge-pill hidden">0</span>
+              </button>
+            </div>
+
+            <!-- TAB PANE 1: ERA & YEAR -->
+            <div id="tabPaneEra" class="filter-tab-pane active">
+              <div class="filter-top-row">
+                <div class="filter-heading-group">
+                  <h3 class="pane-title">Release Year Window</h3>
+                  <p class="pane-subtitle">Isolate specific musical eras and chronological brackets.</p>
                 </div>
-                <div class="range-val-separator">➔</div>
-                <div class="range-val-badge">
-                  <span>To:</span>
-                  <strong id="displayMaxYear">2015</strong>
-                </div>
-                <div class="active-range-summary" id="activeRangeSummary">
-                  Window: 1960 to 2015
+
+                <!-- Era Quick Presets -->
+                <div class="era-presets">
+                  <button class="preset-chip active" data-min="1960" data-max="2015">Pre-2015 Classics (&le; 2015)</button>
+                  <button class="preset-chip" data-min="2000" data-max="2009">2000s Nostalgia (2000-2009)</button>
+                  <button class="preset-chip" data-min="1990" data-max="1999">Pure 90s (1990-1999)</button>
+                  <button class="preset-chip" data-min="1960" data-max="2000">Golden Era (&le; 2000)</button>
+                  <button class="preset-chip" data-min="1960" data-max="2026" data-all="true">All Eras</button>
                 </div>
               </div>
 
-              <div class="dual-slider-wrapper">
-                <div class="dual-slider-track" id="dualSliderHighlight"></div>
-                <input 
-                  type="range" 
-                  id="minYearSlider" 
-                  min="1960" 
-                  max="2026" 
-                  value="1960" 
-                  step="1"
-                  class="range-thumb thumb-min"
-                />
-                <input 
-                  type="range" 
-                  id="maxYearSlider" 
-                  min="1960" 
-                  max="2026" 
-                  value="2015" 
-                  step="1"
-                  class="range-thumb thumb-max"
-                />
+              <!-- Dual-Thumb Range Slider Box -->
+              <div class="dual-range-box">
+                <div class="range-values-display">
+                  <div class="range-val-badge">
+                    <span>From:</span>
+                    <strong id="displayMinYear">1960</strong>
+                  </div>
+                  <div class="range-val-separator">➔</div>
+                  <div class="range-val-badge">
+                    <span>To:</span>
+                    <strong id="displayMaxYear">2015</strong>
+                  </div>
+                  <div class="active-range-summary" id="activeRangeSummary">
+                    Window: 1960 to 2015
+                  </div>
+                </div>
+
+                <div class="dual-slider-wrapper">
+                  <div class="dual-slider-track" id="dualSliderHighlight"></div>
+                  <input 
+                    type="range" 
+                    id="minYearSlider" 
+                    min="1960" 
+                    max="2026" 
+                    value="1960" 
+                    step="1"
+                    class="range-thumb thumb-min"
+                  />
+                  <input 
+                    type="range" 
+                    id="maxYearSlider" 
+                    min="1960" 
+                    max="2026" 
+                    value="2015" 
+                    step="1"
+                    class="range-thumb thumb-max"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB PANE 2: ARTIST MATRIX -->
+            <div id="tabPaneArtists" class="filter-tab-pane hidden">
+              <div class="artist-tab-header">
+                <div class="artist-search-box">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                  <input type="text" id="artistFilterSearchInput" placeholder="Search artists in playlist..." />
+                </div>
+                <div class="artist-quick-actions">
+                  <button id="artistSelectAllBtn" class="btn-sm btn-ghost">Select All</button>
+                  <button id="artistTop5Btn" class="btn-sm btn-secondary">Top 5 Only</button>
+                  <button id="artistClearBtn" class="btn-sm btn-ghost">Clear</button>
+                </div>
+              </div>
+
+              <div id="artistChipsGrid" class="artist-chips-grid">
+                <!-- Injected dynamically via JS -->
+              </div>
+            </div>
+
+            <!-- TAB PANE 3: ATTRIBUTES & MOOD -->
+            <div id="tabPaneAttributes" class="filter-tab-pane hidden">
+              <div class="attributes-grid">
+                
+                <!-- Attribute 1: Popularity (Hidden Gems vs Mainstream) -->
+                <div class="attribute-card">
+                  <div class="attribute-header">
+                    <div>
+                      <h4 class="attribute-title">Track Popularity Score</h4>
+                      <p class="attribute-desc">Filter by mainstream reach vs. underground obscurity (0-100)</p>
+                    </div>
+                    <span id="popularityValueDisplay" class="attribute-badge">0 – 100</span>
+                  </div>
+
+                  <div class="popularity-slider-container">
+                    <div class="popularity-presets-row">
+                      <button class="pop-preset-btn active" data-min="0" data-max="100">All (0-100)</button>
+                      <button class="pop-preset-btn" data-min="0" data-max="35">Hidden Gems (&le; 35)</button>
+                      <button class="pop-preset-btn" data-min="35" data-max="70">Cult Favorites (35-70)</button>
+                      <button class="pop-preset-btn" data-min="70" data-max="100">Chart Hits (&ge; 70)</button>
+                    </div>
+                    <div class="dual-slider-wrapper pop-slider-wrapper">
+                      <div class="dual-slider-track" id="popSliderHighlight"></div>
+                      <input type="range" id="minPopSlider" min="0" max="100" value="0" step="1" class="range-thumb thumb-min" />
+                      <input type="range" id="maxPopSlider" min="0" max="100" value="100" step="1" class="range-thumb thumb-max" />
+                    </div>
+                    <div class="pop-scale-labels">
+                      <span>0 (Deep Cuts)</span>
+                      <span>50 (Moderate)</span>
+                      <span>100 (Global Hits)</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Attribute 2: Duration & Pacing -->
+                <div class="attribute-card">
+                  <div class="attribute-header">
+                    <div>
+                      <h4 class="attribute-title">Track Duration & Pacing</h4>
+                      <p class="attribute-desc">Select song runtime preference</p>
+                    </div>
+                  </div>
+                  <div class="segmented-control" id="durationSegmentedControl">
+                    <button class="segmented-option active" data-duration="all">All Lengths</button>
+                    <button class="segmented-option" data-duration="short">Fast-Paced (&lt; 3m)</button>
+                    <button class="segmented-option" data-duration="medium">Standard (3–5m)</button>
+                    <button class="segmented-option" data-duration="long">Extended (&gt; 5m)</button>
+                  </div>
+                </div>
+
+                <!-- Attribute 3: Content Cleanliness -->
+                <div class="attribute-card">
+                  <div class="attribute-header">
+                    <div>
+                      <h4 class="attribute-title">Content Cleanliness</h4>
+                      <p class="attribute-desc">Filter clean vs. explicit studio cuts</p>
+                    </div>
+                  </div>
+                  <div class="segmented-control" id="explicitSegmentedControl">
+                    <button class="segmented-option active" data-explicit="all">All Content</button>
+                    <button class="segmented-option" data-explicit="clean">Clean Only</button>
+                    <button class="segmented-option" data-explicit="explicit">Explicit Only</button>
+                  </div>
+                </div>
+
               </div>
             </div>
 
@@ -564,6 +689,9 @@
                   <option value="original">Original Order</option>
                   <option value="year-asc">Year: Oldest First</option>
                   <option value="year-desc">Year: Newest First</option>
+                  <option value="pop-desc">Popularity: High to Low</option>
+                  <option value="pop-asc">Popularity: Deep Cuts First</option>
+                  <option value="dur-asc">Duration: Shortest First</option>
                   <option value="title-asc">Title: A to Z</option>
                   <option value="artist-asc">Artist: A to Z</option>
                 </select>
@@ -571,7 +699,7 @@
                 <!-- Quick Selection Actions -->
                 <button id="selectAllBtn" class="btn-sm btn-ghost">Select All</button>
                 <button id="deselectAllBtn" class="btn-sm btn-ghost">Deselect All</button>
-                <button id="resetOverridesBtn" class="btn-sm btn-ghost">Reset</button>
+                <button id="resetOverridesBtn" class="btn-sm btn-ghost">Reset Filters</button>
               </div>
             </div>
           </div>
@@ -722,6 +850,42 @@
             <button type="button" id="cancelDecadeSplitBtn" class="btn btn-ghost">Cancel</button>
             <button type="button" id="confirmDecadeSplitBtn" class="btn btn-primary btn-pill btn-glow">
               <span>Generate Selected Playlists</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ARTIST SPLITTER MODAL -->
+    <div id="artistSplitterModal" class="modal-backdrop hidden">
+      <div class="modal-card double-bezel modal-lg">
+        <div class="modal-inner">
+          <div class="modal-header">
+            <div>
+              <h3>1-Click Artist Splitter</h3>
+              <p class="modal-subtitle">Automatically segment this playlist into separate artist collections</p>
+            </div>
+            <button id="closeArtistModalBtn" class="btn-close">&times;</button>
+          </div>
+
+          <div class="decade-buckets-list" id="artistBucketsContainer">
+            <!-- Injected via JS -->
+          </div>
+
+          <div id="artistExportProgressContainer" class="modal-progress-container hidden">
+            <div class="progress-labels">
+              <span id="artistExportStatus">Generating artist playlists...</span>
+              <span id="artistExportPercent">0%</span>
+            </div>
+            <div class="progress-bar-bg">
+              <div id="artistExportProgressBar" class="progress-bar-fill" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" id="cancelArtistSplitBtn" class="btn btn-ghost">Cancel</button>
+            <button type="button" id="confirmArtistSplitBtn" class="btn btn-primary btn-pill btn-glow">
+              <span>Generate Artist Playlists</span>
             </button>
           </div>
         </div>

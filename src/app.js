@@ -1,7 +1,7 @@
 /**
- * Main Application Controller
- * Handles UI interactions, dual-range era filtering, timeline analytics,
- * decade batch splitting, story cards, and Spotify export workflows.
+ * Main Application Controller — Multi-Dimensional Playlist Studio
+ * Handles Year/Era windows, Artist Matrix selection, Popularity (Hidden Gems),
+ * Duration & Cleanliness filters, Timeline analytics, 1-Click Decade & Artist Splitters.
  */
 
 import { 
@@ -26,6 +26,7 @@ import { renderDecadeChart, getClickedDecade } from './chart.js';
 import { generateSocialStoryCard, downloadSocialStoryCard } from './socialCard.js';
 import { generateRetroCoverArt } from './coverArt.js';
 import { segmentTracksByDecade, executeDecadeSplitExport } from './decadeSplitter.js';
+import { groupTracksByTopArtists, renderArtistSplitterList, executeArtistBatchSplit } from './artistSplitter.js';
 import confetti from 'canvas-confetti';
 
 // Global Application State
@@ -36,9 +37,23 @@ const state = {
   selectedPlaylistId: null,
   activePlaylistInfo: null,
   allTracks: [],
+  
+  // Filter Dimensions
   minYear: 1960,
   maxYear: 2015,
   isAllEraSelected: false,
+  selectedArtists: new Set(),
+  minPopularity: 0,
+  maxPopularity: 100,
+  durationFilter: 'all', // 'all' | 'short' | 'medium' | 'long'
+  explicitFilter: 'all', // 'all' | 'clean' | 'explicit'
+  activePurposePreset: 'all',
+  
+  // Artist Metadata
+  uniqueArtists: [], // { name: string, count: number }
+  artistSearchQuery: '',
+  
+  // UI State
   searchQuery: '',
   showOnlyIncluded: true,
   sortBy: 'original',
@@ -47,7 +62,8 @@ const state = {
   isLoadingPlaylist: false,
   isExporting: false,
   socialCardDataUrl: null,
-  decadeSplitBuckets: []
+  decadeSplitBuckets: [],
+  artistSplitBuckets: []
 };
 
 // DOM Element Registry
@@ -72,7 +88,7 @@ const elements = {
   loadingStatusText: document.getElementById('loadingStatusText'),
   loadingPercentText: document.getElementById('loadingPercentText'),
 
-  // Filter Workspace
+  // Filter Workspace & Banner
   filterWorkspace: document.getElementById('filterWorkspace'),
   bannerPlaylistImg: document.getElementById('bannerPlaylistImg'),
   bannerPlaylistTitle: document.getElementById('bannerPlaylistTitle'),
@@ -82,12 +98,24 @@ const elements = {
 
   // Power Actions
   openDecadeSplitterBtn: document.getElementById('openDecadeSplitterBtn'),
+  openArtistSplitterBtn: document.getElementById('openArtistSplitterBtn'),
   openSocialCardBtn: document.getElementById('openSocialCardBtn'),
 
   // Timeline Chart
   timelineChartCanvas: document.getElementById('timelineChartCanvas'),
 
-  // Dual Range Sliders
+  // Purpose Presets
+  purposePresetButtons: document.querySelectorAll('.purpose-preset-chip'),
+
+  // Filter Studio Tabs
+  filterTabButtons: document.querySelectorAll('.filter-tab-btn'),
+  tabPaneEra: document.getElementById('tabPaneEra'),
+  tabPaneArtists: document.getElementById('tabPaneArtists'),
+  tabPaneAttributes: document.getElementById('tabPaneAttributes'),
+  artistFilterCountBadge: document.getElementById('artistFilterCountBadge'),
+  attributesFilterCountBadge: document.getElementById('attributesFilterCountBadge'),
+
+  // Era Tab Elements
   minYearSlider: document.getElementById('minYearSlider'),
   maxYearSlider: document.getElementById('maxYearSlider'),
   dualSliderHighlight: document.getElementById('dualSliderHighlight'),
@@ -95,6 +123,22 @@ const elements = {
   displayMaxYear: document.getElementById('displayMaxYear'),
   activeRangeSummary: document.getElementById('activeRangeSummary'),
   eraPresetButtons: document.querySelectorAll('.preset-chip'),
+
+  // Artist Tab Elements
+  artistFilterSearchInput: document.getElementById('artistFilterSearchInput'),
+  artistSelectAllBtn: document.getElementById('artistSelectAllBtn'),
+  artistTop5Btn: document.getElementById('artistTop5Btn'),
+  artistClearBtn: document.getElementById('artistClearBtn'),
+  artistChipsGrid: document.getElementById('artistChipsGrid'),
+
+  // Attributes Tab Elements
+  popularityValueDisplay: document.getElementById('popularityValueDisplay'),
+  minPopSlider: document.getElementById('minPopSlider'),
+  maxPopSlider: document.getElementById('maxPopSlider'),
+  popSliderHighlight: document.getElementById('popSliderHighlight'),
+  popPresetButtons: document.querySelectorAll('.pop-preset-btn'),
+  durationOptions: document.querySelectorAll('#durationSegmentedControl .segmented-option'),
+  explicitOptions: document.querySelectorAll('#explicitSegmentedControl .segmented-option'),
 
   // Stats
   statIncludedCount: document.getElementById('statIncludedCount'),
@@ -146,6 +190,17 @@ const elements = {
   confirmDecadeSplitBtn: document.getElementById('confirmDecadeSplitBtn'),
   cancelDecadeSplitBtn: document.getElementById('cancelDecadeSplitBtn'),
   closeDecadeModalBtn: document.getElementById('closeDecadeModalBtn'),
+
+  // Artist Splitter Modal
+  artistSplitterModal: document.getElementById('artistSplitterModal'),
+  artistBucketsContainer: document.getElementById('artistBucketsContainer'),
+  artistExportProgressContainer: document.getElementById('artistExportProgressContainer'),
+  artistExportProgressBar: document.getElementById('artistExportProgressBar'),
+  artistExportStatus: document.getElementById('artistExportStatus'),
+  artistExportPercent: document.getElementById('artistExportPercent'),
+  confirmArtistSplitBtn: document.getElementById('confirmArtistSplitBtn'),
+  cancelArtistSplitBtn: document.getElementById('cancelArtistSplitBtn'),
+  closeArtistModalBtn: document.getElementById('closeArtistModalBtn'),
 
   // Social Story Card Modal
   socialCardModal: document.getElementById('socialCardModal'),
@@ -250,7 +305,6 @@ async function loadUserPlaylists() {
     
     elements.playlistSelect.innerHTML = '<option value="">-- Choose a playlist created by you --</option>';
     
-    // Only display playlists created/owned by the logged-in user
     const myPlaylists = state.playlists.filter(pl => {
       return !pl.owner || !state.user || pl.owner.id === state.user.id;
     });
@@ -282,8 +336,18 @@ async function loadPlaylistTracks(playlistId) {
   state.isLoadingPlaylist = true;
   state.selectedPlaylistId = playlistId;
   state.manualOverrides.clear();
+  state.selectedArtists.clear();
 
-  // Show loading progress
+  // Reset to default filters
+  state.minYear = 1960;
+  state.maxYear = 2015;
+  state.isAllEraSelected = false;
+  state.minPopularity = 0;
+  state.maxPopularity = 100;
+  state.durationFilter = 'all';
+  state.explicitFilter = 'all';
+  state.activePurposePreset = 'all';
+
   elements.loadingProgressContainer.classList.remove('hidden');
   elements.loadingProgressBar.style.width = '0%';
   elements.loadingPercentText.textContent = '0%';
@@ -306,10 +370,16 @@ async function loadPlaylistTracks(playlistId) {
     elements.bannerTotalCount.textContent = `${state.allTracks.length} tracks`;
     elements.bannerOwner.textContent = `By ${state.activePlaylistInfo.owner}`;
 
+    // Aggregate Artists
+    aggregatePlaylistArtists(state.allTracks);
+    renderArtistChips();
+
     elements.filterWorkspace.classList.remove('hidden');
     elements.loadingProgressContainer.classList.add('hidden');
 
     updateDualSliderUI();
+    updatePopSliderUI();
+    updateAttributeBadges();
     applyFiltersAndRender();
   } catch (err) {
     console.error('Failed to load playlist tracks:', err);
@@ -320,23 +390,112 @@ async function loadPlaylistTracks(playlistId) {
   }
 }
 
+// Extract and aggregate all contributing artists
+function aggregatePlaylistArtists(tracks) {
+  const counts = new Map();
+
+  tracks.forEach(t => {
+    const names = (t.artists || '').split(',').map(n => n.trim()).filter(Boolean);
+    names.forEach(name => {
+      counts.set(name, (counts.get(name) || 0) + 1);
+    });
+  });
+
+  state.uniqueArtists = Array.from(counts.entries())
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count);
+}
+
+function renderArtistChips() {
+  if (!elements.artistChipsGrid) return;
+  elements.artistChipsGrid.innerHTML = '';
+
+  const q = state.artistSearchQuery.toLowerCase().trim();
+  const filtered = state.uniqueArtists.filter(a => !q || a.name.toLowerCase().includes(q));
+
+  if (filtered.length === 0) {
+    elements.artistChipsGrid.innerHTML = '<p class="empty-state" style="padding:16px;">No matching artists found.</p>';
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+
+  filtered.forEach(artist => {
+    const isSelected = state.selectedArtists.has(artist.name);
+    const chip = document.createElement('div');
+    chip.className = `artist-chip ${isSelected ? 'selected' : ''}`;
+    chip.dataset.artistName = artist.name;
+    chip.innerHTML = `
+      <span>${escapeHtml(artist.name)}</span>
+      <span class="artist-count-badge">${artist.count}</span>
+    `;
+    chip.addEventListener('click', () => {
+      if (state.selectedArtists.has(artist.name)) {
+        state.selectedArtists.delete(artist.name);
+      } else {
+        state.selectedArtists.add(artist.name);
+      }
+      chip.classList.toggle('selected', state.selectedArtists.has(artist.name));
+      updateAttributeBadges();
+      applyFiltersAndRender();
+    });
+    fragment.appendChild(chip);
+  });
+
+  elements.artistChipsGrid.appendChild(fragment);
+}
+
+// Multi-Dimensional Inclusion Predicate
 function isTrackIncluded(track) {
-  // Check for manual user override first
+  // 1. Manual user checkbox override always takes highest priority
   if (state.manualOverrides.has(track.id)) {
     return state.manualOverrides.get(track.id);
   }
 
-  // If "All Era" is selected
-  if (state.isAllEraSelected) {
-    return true;
+  // 2. Era / Year Filter
+  if (!state.isAllEraSelected) {
+    if (!track.releaseYear) return false;
+    if (track.releaseYear < state.minYear || track.releaseYear > state.maxYear) {
+      return false;
+    }
   }
 
-  // Check release year within [minYear, maxYear] window
-  if (!track.releaseYear) {
+  // 3. Artist Filter (If any artists selected, track must match at least one)
+  if (state.selectedArtists.size > 0) {
+    const trackArtistNames = (track.artists || '').split(',').map(n => n.trim());
+    const matchesArtist = trackArtistNames.some(name => state.selectedArtists.has(name));
+    if (!matchesArtist) {
+      return false;
+    }
+  }
+
+  // 4. Popularity Range Filter (0-100)
+  const pop = track.popularity || 0;
+  if (pop < state.minPopularity || pop > state.maxPopularity) {
     return false;
   }
 
-  return track.releaseYear >= state.minYear && track.releaseYear <= state.maxYear;
+  // 5. Track Duration Filter
+  const durMs = track.durationMs || 0;
+  if (state.durationFilter === 'short' && durMs > 195000) { // > 3:15 min
+    return false;
+  }
+  if (state.durationFilter === 'medium' && (durMs < 180000 || durMs > 300000)) { // not between 3:00 and 5:00 min
+    return false;
+  }
+  if (state.durationFilter === 'long' && durMs < 300000) { // < 5:00 min
+    return false;
+  }
+
+  // 6. Explicit Content Filter
+  if (state.explicitFilter === 'clean' && track.explicit === true) {
+    return false;
+  }
+  if (state.explicitFilter === 'explicit' && track.explicit !== true) {
+    return false;
+  }
+
+  return true;
 }
 
 function updateDualSliderUI() {
@@ -359,16 +518,64 @@ function updateDualSliderUI() {
   elements.displayMaxYear.textContent = state.maxYear;
 
   if (state.isAllEraSelected) {
-    elements.activeRangeSummary.textContent = 'Window: All Tracks';
+    elements.activeRangeSummary.textContent = 'Window: All Eras';
   } else {
     elements.activeRangeSummary.textContent = `Window: ${state.minYear} to ${state.maxYear}`;
+  }
+}
+
+function updatePopSliderUI() {
+  const minSlider = elements.minPopSlider;
+  const maxSlider = elements.maxPopSlider;
+  const track = elements.popSliderHighlight;
+
+  if (!minSlider || !maxSlider || !track) return;
+
+  const min = parseInt(minSlider.min, 10);
+  const max = parseInt(minSlider.max, 10);
+
+  const percentMin = ((state.minPopularity - min) / (max - min)) * 100;
+  const percentMax = ((state.maxPopularity - min) / (max - min)) * 100;
+
+  track.style.left = `${percentMin}%`;
+  track.style.width = `${percentMax - percentMin}%`;
+
+  if (elements.popularityValueDisplay) {
+    elements.popularityValueDisplay.textContent = `${state.minPopularity} – ${state.maxPopularity}`;
+  }
+}
+
+function updateAttributeBadges() {
+  // Artist tab badge
+  if (elements.artistFilterCountBadge) {
+    const artistCount = state.selectedArtists.size;
+    if (artistCount > 0) {
+      elements.artistFilterCountBadge.textContent = `${artistCount}`;
+      elements.artistFilterCountBadge.classList.remove('hidden');
+    } else {
+      elements.artistFilterCountBadge.classList.add('hidden');
+    }
+  }
+
+  // Attributes tab badge
+  if (elements.attributesFilterCountBadge) {
+    let attrCount = 0;
+    if (state.minPopularity > 0 || state.maxPopularity < 100) attrCount++;
+    if (state.durationFilter !== 'all') attrCount++;
+    if (state.explicitFilter !== 'all') attrCount++;
+
+    if (attrCount > 0) {
+      elements.attributesFilterCountBadge.textContent = `${attrCount}`;
+      elements.attributesFilterCountBadge.classList.remove('hidden');
+    } else {
+      elements.attributesFilterCountBadge.classList.add('hidden');
+    }
   }
 }
 
 function applyFiltersAndRender() {
   const query = state.searchQuery.toLowerCase().trim();
 
-  // Calculate inclusion stats for all tracks
   let includedCount = 0;
   let excludedCount = 0;
 
@@ -380,20 +587,18 @@ function applyFiltersAndRender() {
     }
   });
 
-  // Filter for display
+  // Filter tracks to display
   let displayTracks = state.allTracks.filter(track => {
     const isInc = isTrackIncluded(track);
     
-    // View mode filter
     if (state.showOnlyIncluded && !isInc) {
       return false;
     }
 
-    // Search query filter
     if (query) {
-      const matchTitle = track.name.toLowerCase().includes(query);
-      const matchArtist = track.artists.toLowerCase().includes(query);
-      const matchAlbum = track.albumName.toLowerCase().includes(query);
+      const matchTitle = (track.name || '').toLowerCase().includes(query);
+      const matchArtist = (track.artists || '').toLowerCase().includes(query);
+      const matchAlbum = (track.albumName || '').toLowerCase().includes(query);
       if (!matchTitle && !matchArtist && !matchAlbum) {
         return false;
       }
@@ -410,11 +615,20 @@ function applyFiltersAndRender() {
     if (state.sortBy === 'year-desc') {
       return (b.releaseYear || 0) - (a.releaseYear || 0);
     }
+    if (state.sortBy === 'pop-desc') {
+      return (b.popularity || 0) - (a.popularity || 0);
+    }
+    if (state.sortBy === 'pop-asc') {
+      return (a.popularity || 0) - (b.popularity || 0);
+    }
+    if (state.sortBy === 'dur-asc') {
+      return (a.durationMs || 0) - (b.durationMs || 0);
+    }
     if (state.sortBy === 'title-asc') {
-      return a.name.localeCompare(b.name);
+      return (a.name || '').localeCompare(b.name || '');
     }
     if (state.sortBy === 'artist-asc') {
-      return a.artists.localeCompare(b.artists);
+      return (a.artists || '').localeCompare(b.artists || '');
     }
     return a.index - b.index;
   });
@@ -452,6 +666,7 @@ function renderTracksTable(tracks) {
     const isInc = isTrackIncluded(track);
     const year = track.releaseYear || 'Unknown';
     const isRetro = track.releaseYear && track.releaseYear <= 2015;
+    const pop = track.popularity || 0;
 
     const row = document.createElement('div');
     row.className = `track-row ${isInc ? 'is-included' : 'is-excluded'}`;
@@ -467,7 +682,11 @@ function renderTracksTable(tracks) {
       </div>
       <div class="col-title track-title-box">
         <span class="track-name" title="${escapeHtml(track.name)}">${escapeHtml(track.name)}</span>
-        <span class="track-artists" title="${escapeHtml(track.artists)}">${escapeHtml(track.artists)}</span>
+        <div class="track-extra-badges">
+          <span class="track-artists" title="${escapeHtml(track.artists)}">${escapeHtml(track.artists)}</span>
+          ${track.explicit ? `<span class="badge-explicit">E</span>` : ''}
+          <span class="badge-pop" title="Popularity: ${pop}/100">★ ${pop}</span>
+        </div>
       </div>
       <div class="col-album track-album" title="${escapeHtml(track.albumName)}">
         ${escapeHtml(track.albumName)}
@@ -518,7 +737,6 @@ function toggleAudioPreview(button) {
     button.textContent = 'Play';
     button.classList.remove('playing');
   } else {
-    // Reset any other playing button
     document.querySelectorAll('.btn-preview.playing').forEach(btn => {
       btn.textContent = 'Play';
       btn.classList.remove('playing');
@@ -598,7 +816,79 @@ function setupEventListeners() {
     loadUserPlaylists();
   });
 
-  // Dual Range Sliders
+  // Filter Studio Tabs Switcher
+  elements.filterTabButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      elements.filterTabButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const targetTab = btn.dataset.tab;
+      elements.tabPaneEra.classList.toggle('hidden', targetTab !== 'era');
+      elements.tabPaneEra.classList.toggle('active', targetTab === 'era');
+      elements.tabPaneArtists.classList.toggle('hidden', targetTab !== 'artists');
+      elements.tabPaneArtists.classList.toggle('active', targetTab === 'artists');
+      elements.tabPaneAttributes.classList.toggle('hidden', targetTab !== 'attributes');
+      elements.tabPaneAttributes.classList.toggle('active', targetTab === 'attributes');
+    });
+  });
+
+  // Purpose Presets
+  elements.purposePresetButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      elements.purposePresetButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const preset = btn.dataset.preset;
+      state.activePurposePreset = preset;
+
+      if (preset === 'all') {
+        state.isAllEraSelected = true;
+        state.minYear = 1960;
+        state.maxYear = 2026;
+        state.minPopularity = 0;
+        state.maxPopularity = 100;
+        state.durationFilter = 'all';
+        state.explicitFilter = 'all';
+        state.selectedArtists.clear();
+      } else if (preset === 'hidden-gems') {
+        state.minPopularity = 0;
+        state.maxPopularity = 35;
+      } else if (preset === 'chart-toppers') {
+        state.minPopularity = 70;
+        state.maxPopularity = 100;
+      } else if (preset === 'clean-classics') {
+        state.minYear = 1960;
+        state.maxYear = 2015;
+        state.isAllEraSelected = false;
+        state.explicitFilter = 'clean';
+      } else if (preset === 'fast-paced') {
+        state.durationFilter = 'short';
+        state.minPopularity = 30;
+      }
+
+      // Sync UI sliders & inputs
+      elements.minYearSlider.value = state.minYear;
+      elements.maxYearSlider.value = state.maxYear;
+      elements.minPopSlider.value = state.minPopularity;
+      elements.maxPopSlider.value = state.maxPopularity;
+
+      // Sync segmented controls
+      elements.durationOptions.forEach(opt => {
+        opt.classList.toggle('active', opt.dataset.duration === state.durationFilter);
+      });
+      elements.explicitOptions.forEach(opt => {
+        opt.classList.toggle('active', opt.dataset.explicit === state.explicitFilter);
+      });
+
+      renderArtistChips();
+      updateDualSliderUI();
+      updatePopSliderUI();
+      updateAttributeBadges();
+      applyFiltersAndRender();
+    });
+  });
+
+  // Dual Range Year Sliders
   elements.minYearSlider?.addEventListener('input', (e) => {
     let val = parseInt(e.target.value, 10);
     if (val > state.maxYear) {
@@ -623,7 +913,100 @@ function setupEventListeners() {
     applyFiltersAndRender();
   });
 
-  // Interactive Timeline Chart Click to Filter by Decade
+  // Popularity Dual Sliders
+  elements.minPopSlider?.addEventListener('input', (e) => {
+    let val = parseInt(e.target.value, 10);
+    if (val > state.maxPopularity) {
+      val = state.maxPopularity;
+      elements.minPopSlider.value = val;
+    }
+    state.minPopularity = val;
+    updatePopSliderUI();
+    updateAttributeBadges();
+    applyFiltersAndRender();
+  });
+
+  elements.maxPopSlider?.addEventListener('input', (e) => {
+    let val = parseInt(e.target.value, 10);
+    if (val < state.minPopularity) {
+      val = state.minPopularity;
+      elements.maxPopSlider.value = val;
+    }
+    state.maxPopularity = val;
+    updatePopSliderUI();
+    updateAttributeBadges();
+    applyFiltersAndRender();
+  });
+
+  // Popularity Presets
+  elements.popPresetButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      elements.popPresetButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      state.minPopularity = parseInt(btn.dataset.min, 10);
+      state.maxPopularity = parseInt(btn.dataset.max, 10);
+      elements.minPopSlider.value = state.minPopularity;
+      elements.maxPopSlider.value = state.maxPopularity;
+
+      updatePopSliderUI();
+      updateAttributeBadges();
+      applyFiltersAndRender();
+    });
+  });
+
+  // Duration Segmented Control
+  elements.durationOptions.forEach(opt => {
+    opt.addEventListener('click', () => {
+      elements.durationOptions.forEach(o => o.classList.remove('active'));
+      opt.classList.add('active');
+      state.durationFilter = opt.dataset.duration;
+      updateAttributeBadges();
+      applyFiltersAndRender();
+    });
+  });
+
+  // Explicit Segmented Control
+  elements.explicitOptions.forEach(opt => {
+    opt.addEventListener('click', () => {
+      elements.explicitOptions.forEach(o => o.classList.remove('active'));
+      opt.classList.add('active');
+      state.explicitFilter = opt.dataset.explicit;
+      updateAttributeBadges();
+      applyFiltersAndRender();
+    });
+  });
+
+  // Artist Filter Search Input
+  elements.artistFilterSearchInput?.addEventListener('input', (e) => {
+    state.artistSearchQuery = e.target.value;
+    renderArtistChips();
+  });
+
+  // Artist Quick Actions
+  elements.artistSelectAllBtn?.addEventListener('click', () => {
+    state.uniqueArtists.forEach(a => state.selectedArtists.add(a.name));
+    renderArtistChips();
+    updateAttributeBadges();
+    applyFiltersAndRender();
+  });
+
+  elements.artistTop5Btn?.addEventListener('click', () => {
+    state.selectedArtists.clear();
+    state.uniqueArtists.slice(0, 5).forEach(a => state.selectedArtists.add(a.name));
+    renderArtistChips();
+    updateAttributeBadges();
+    applyFiltersAndRender();
+  });
+
+  elements.artistClearBtn?.addEventListener('click', () => {
+    state.selectedArtists.clear();
+    renderArtistChips();
+    updateAttributeBadges();
+    applyFiltersAndRender();
+  });
+
+  // Interactive Timeline Chart Click
   elements.timelineChartCanvas?.addEventListener('click', (e) => {
     const clicked = getClickedDecade(elements.timelineChartCanvas, e);
     if (clicked) {
@@ -633,7 +1016,6 @@ function setupEventListeners() {
       elements.minYearSlider.value = state.minYear;
       elements.maxYearSlider.value = state.maxYear;
       
-      // Update preset chips highlight
       elements.eraPresetButtons.forEach(btn => {
         const isMatch = parseInt(btn.dataset.min, 10) === state.minYear && parseInt(btn.dataset.max, 10) === state.maxYear;
         btn.classList.toggle('active', isMatch);
@@ -644,7 +1026,7 @@ function setupEventListeners() {
     }
   });
 
-  // Preset Chips
+  // Era Preset Chips
   elements.eraPresetButtons.forEach(btn => {
     btn.addEventListener('click', () => {
       elements.eraPresetButtons.forEach(b => b.classList.remove('active'));
@@ -667,13 +1049,13 @@ function setupEventListeners() {
     });
   });
 
-  // Search Input
+  // General Track Search Input
   elements.trackSearchInput?.addEventListener('input', (e) => {
     state.searchQuery = e.target.value;
     applyFiltersAndRender();
   });
 
-  // View Filter Toggle: Show Included vs Show All
+  // View Filter Toggle: Included vs All
   elements.showIncludedOnlyBtn?.addEventListener('click', () => {
     state.showOnlyIncluded = true;
     elements.showIncludedOnlyBtn.classList.add('active');
@@ -704,11 +1086,10 @@ function setupEventListeners() {
     applyFiltersAndRender();
   });
 
-  // Table Row Checkbox & Audio Preview Click delegation
+  // Table Row Delegation
   elements.tracksTableBody?.addEventListener('click', (e) => {
     const target = e.target;
 
-    // Checkbox toggle
     if (target.classList.contains('track-checkbox')) {
       const trackId = target.dataset.trackId;
       state.manualOverrides.set(trackId, target.checked);
@@ -716,7 +1097,6 @@ function setupEventListeners() {
       return;
     }
 
-    // Audio preview click
     const previewBtn = target.closest('.btn-preview');
     if (previewBtn) {
       toggleAudioPreview(previewBtn);
@@ -724,7 +1104,7 @@ function setupEventListeners() {
     }
   });
 
-  // Bulk Selection Buttons
+  // Bulk Actions
   elements.selectAllBtn?.addEventListener('click', () => {
     state.allTracks.forEach(t => state.manualOverrides.set(t.id, true));
     applyFiltersAndRender();
@@ -737,10 +1117,31 @@ function setupEventListeners() {
 
   elements.resetOverridesBtn?.addEventListener('click', () => {
     state.manualOverrides.clear();
+    state.selectedArtists.clear();
+    state.minYear = 1960;
+    state.maxYear = 2015;
+    state.isAllEraSelected = false;
+    state.minPopularity = 0;
+    state.maxPopularity = 100;
+    state.durationFilter = 'all';
+    state.explicitFilter = 'all';
+
+    elements.minYearSlider.value = 1960;
+    elements.maxYearSlider.value = 2015;
+    elements.minPopSlider.value = 0;
+    elements.maxPopSlider.value = 100;
+
+    elements.durationOptions.forEach(opt => opt.classList.toggle('active', opt.dataset.duration === 'all'));
+    elements.explicitOptions.forEach(opt => opt.classList.toggle('active', opt.dataset.explicit === 'all'));
+
+    renderArtistChips();
+    updateDualSliderUI();
+    updatePopSliderUI();
+    updateAttributeBadges();
     applyFiltersAndRender();
   });
 
-  // Open Export Modal
+  // Open Export Modal with Dynamic Purpose Naming
   elements.openExportModalBtn?.addEventListener('click', () => {
     const includedTracks = state.allTracks.filter(t => isTrackIncluded(t));
     if (includedTracks.length === 0) {
@@ -749,22 +1150,37 @@ function setupEventListeners() {
     }
 
     const baseName = state.activePlaylistInfo?.name || 'Playlist';
-    let eraTag = '';
-    let eraDescription = '';
+    const tagParts = [];
 
     if (state.isAllEraSelected) {
-      eraTag = 'Curated Selection';
-      eraDescription = 'Curated collection of tracks exported with Spotify Playlist Filter.';
+      tagParts.push('All Eras');
     } else if (state.minYear === 1960) {
-      eraTag = `<= ${state.maxYear} Classics`;
-      eraDescription = `Curated collection of tracks released on or before ${state.maxYear}.`;
+      tagParts.push(`≤ ${state.maxYear}`);
     } else {
-      eraTag = `${state.minYear}-${state.maxYear} Era`;
-      eraDescription = `Curated collection of tracks released between ${state.minYear} and ${state.maxYear}.`;
+      tagParts.push(`${state.minYear}-${state.maxYear}`);
     }
 
-    elements.exportPlaylistName.value = `${baseName} (${eraTag})`;
-    elements.exportPlaylistDesc.value = eraDescription;
+    if (state.selectedArtists.size > 0) {
+      if (state.selectedArtists.size === 1) {
+        tagParts.push(Array.from(state.selectedArtists)[0]);
+      } else {
+        tagParts.push(`${state.selectedArtists.size} Artists`);
+      }
+    }
+
+    if (state.maxPopularity <= 35) {
+      tagParts.push('Hidden Gems');
+    } else if (state.minPopularity >= 70) {
+      tagParts.push('Chart Hits');
+    }
+
+    if (state.explicitFilter === 'clean') {
+      tagParts.push('Clean');
+    }
+
+    const nameTag = tagParts.join(' • ');
+    elements.exportPlaylistName.value = `${baseName} (${nameTag})`;
+    elements.exportPlaylistDesc.value = `Custom curated selection exported from ${baseName} with Playlist Year Filter.`;
 
     elements.modalExportCount.textContent = includedTracks.length;
     elements.modalAccountName.textContent = state.user?.display_name || 'Your Spotify Account';
@@ -774,14 +1190,10 @@ function setupEventListeners() {
   });
 
   // Close Export Modal
-  elements.cancelExportBtn?.addEventListener('click', () => {
-    elements.exportModal.classList.add('hidden');
-  });
-  elements.closeModalBtn?.addEventListener('click', () => {
-    elements.exportModal.classList.add('hidden');
-  });
+  elements.cancelExportBtn?.addEventListener('click', () => elements.exportModal.classList.add('hidden'));
+  elements.closeModalBtn?.addEventListener('click', () => elements.exportModal.classList.add('hidden'));
 
-  // Confirm Export Form Submit
+  // Submit Export
   elements.exportForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     await handleExportPlaylist();
@@ -801,17 +1213,31 @@ function setupEventListeners() {
     elements.decadeSplitterModal.classList.remove('hidden');
   });
 
-  elements.cancelDecadeSplitBtn?.addEventListener('click', () => {
-    elements.decadeSplitterModal.classList.add('hidden');
-  });
-  elements.closeDecadeModalBtn?.addEventListener('click', () => {
-    elements.decadeSplitterModal.classList.add('hidden');
+  elements.cancelDecadeSplitBtn?.addEventListener('click', () => elements.decadeSplitterModal.classList.add('hidden'));
+  elements.closeDecadeModalBtn?.addEventListener('click', () => elements.decadeSplitterModal.classList.add('hidden'));
+  elements.confirmDecadeSplitBtn?.addEventListener('click', async () => await handleDecadeSplitExport());
+
+  // Open Artist Splitter Modal
+  elements.openArtistSplitterBtn?.addEventListener('click', () => {
+    if (!state.allTracks || state.allTracks.length === 0) {
+      alert('Please load a playlist first.');
+      return;
+    }
+
+    state.artistSplitBuckets = groupTracksByTopArtists(state.allTracks, 2);
+    renderArtistSplitterList(
+      elements.artistBucketsContainer, 
+      state.artistSplitBuckets, 
+      state.activePlaylistInfo?.name || 'Playlist'
+    );
+    elements.artistExportProgressContainer.classList.add('hidden');
+    elements.confirmArtistSplitBtn.disabled = false;
+    elements.artistSplitterModal.classList.remove('hidden');
   });
 
-  // Confirm Decade Split Export
-  elements.confirmDecadeSplitBtn?.addEventListener('click', async () => {
-    await handleDecadeSplitExport();
-  });
+  elements.cancelArtistSplitBtn?.addEventListener('click', () => elements.artistSplitterModal.classList.add('hidden'));
+  elements.closeArtistModalBtn?.addEventListener('click', () => elements.artistSplitterModal.classList.add('hidden'));
+  elements.confirmArtistSplitBtn?.addEventListener('click', async () => await handleArtistSplitExport());
 
   // Open Social Story Card Modal
   elements.openSocialCardBtn?.addEventListener('click', () => {
@@ -834,21 +1260,15 @@ function setupEventListeners() {
   elements.downloadStoryCardBtn?.addEventListener('click', () => {
     if (state.socialCardDataUrl) {
       const cleanName = (state.activePlaylistInfo?.name || 'playlist').toLowerCase().replace(/[^a-z0-9]/g, '-');
-      downloadSocialStoryCard(state.socialCardDataUrl, `${cleanName}-era-dna.png`);
+      downloadSocialStoryCard(state.socialCardDataUrl, `${cleanName}-dna-card.png`);
     }
   });
 
-  elements.closeSocialModalBtn?.addEventListener('click', () => {
-    elements.socialCardModal.classList.add('hidden');
-  });
-  elements.closeStoryModalBtn?.addEventListener('click', () => {
-    elements.socialCardModal.classList.add('hidden');
-  });
+  elements.closeSocialModalBtn?.addEventListener('click', () => elements.socialCardModal.classList.add('hidden'));
+  elements.closeStoryModalBtn?.addEventListener('click', () => elements.socialCardModal.classList.add('hidden'));
 
   // Close Success Modal
-  elements.closeSuccessBtn?.addEventListener('click', () => {
-    elements.successModal.classList.add('hidden');
-  });
+  elements.closeSuccessBtn?.addEventListener('click', () => elements.successModal.classList.add('hidden'));
 }
 
 function renderDecadeBucketsUI() {
@@ -904,7 +1324,6 @@ async function handleDecadeSplitExport() {
 
     elements.decadeSplitterModal.classList.add('hidden');
 
-    // Show Success Modal with all created playlist links
     elements.successSummaryText.innerHTML = `
       Successfully generated <strong>${results.length} decade playlists</strong> in your Spotify account!
     `;
@@ -925,17 +1344,77 @@ async function handleDecadeSplitExport() {
     elements.openInSpotifyBtn.href = results[0]?.playlistUrl || '#';
     elements.successModal.classList.remove('hidden');
 
-    confetti({
-      particleCount: 140,
-      spread: 80,
-      origin: { y: 0.6 }
-    });
-
+    confetti({ particleCount: 140, spread: 80, origin: { y: 0.6 } });
   } catch (err) {
     console.error('Decade split export error:', err);
     alert(`Export failed: ${err.message}`);
   } finally {
     elements.confirmDecadeSplitBtn.disabled = false;
+  }
+}
+
+async function handleArtistSplitExport() {
+  const checks = elements.artistBucketsContainer.querySelectorAll('.artist-bucket-checkbox:checked');
+  const selectedIndices = Array.from(checks).map(c => parseInt(c.dataset.index, 10));
+  
+  const chosenGroups = selectedIndices.map(idx => {
+    const group = state.artistSplitBuckets[idx];
+    const customTitleInput = elements.artistBucketsContainer.querySelector(`.artist-bucket-name-input[data-index="${idx}"]`);
+    return {
+      ...group,
+      customTitle: customTitleInput ? customTitleInput.value.trim() : `${group.artistName} Essentials`
+    };
+  });
+
+  if (chosenGroups.length === 0) {
+    alert('Please select at least one artist to export.');
+    return;
+  }
+
+  elements.artistExportProgressContainer.classList.remove('hidden');
+  elements.confirmArtistSplitBtn.disabled = true;
+
+  try {
+    const results = await executeArtistBatchSplit({
+      token: state.token,
+      userId: state.user.id,
+      selectedGroups: chosenGroups,
+      sourcePlaylistTitle: state.activePlaylistInfo?.name || 'Playlist',
+      onProgress: (prog) => {
+        elements.artistExportStatus.textContent = `Creating ${prog.currentArtist} (${prog.currentIndex} of ${prog.total})...`;
+        elements.artistExportPercent.textContent = `${Math.round((prog.currentIndex / prog.total) * 100)}%`;
+        elements.artistExportProgressBar.style.width = `${Math.round((prog.currentIndex / prog.total) * 100)}%`;
+      }
+    });
+
+    elements.artistSplitterModal.classList.add('hidden');
+
+    elements.successSummaryText.innerHTML = `
+      Successfully generated <strong>${results.length} artist playlists</strong> in your Spotify account!
+    `;
+
+    elements.createdPlaylistsLinksList.innerHTML = '';
+    elements.createdPlaylistsLinksList.classList.remove('hidden');
+
+    results.forEach(res => {
+      const item = document.createElement('div');
+      item.className = 'created-link-item';
+      item.innerHTML = `
+        <span>${escapeHtml(res.title)} (${res.count} tracks)</span>
+        <a href="${res.url}" target="_blank">Open in Spotify ➔</a>
+      `;
+      elements.createdPlaylistsLinksList.appendChild(item);
+    });
+
+    elements.openInSpotifyBtn.href = results[0]?.url || '#';
+    elements.successModal.classList.remove('hidden');
+
+    confetti({ particleCount: 140, spread: 80, origin: { y: 0.6 } });
+  } catch (err) {
+    console.error('Artist split export error:', err);
+    alert(`Artist split failed: ${err.message}`);
+  } finally {
+    elements.confirmArtistSplitBtn.disabled = false;
   }
 }
 
@@ -960,7 +1439,6 @@ async function handleExportPlaylist() {
     return;
   }
 
-  // Show progress inside modal
   elements.exportProgressContainer.classList.remove('hidden');
   elements.confirmExportBtn.disabled = true;
   elements.exportProgressBar.style.width = '0%';
@@ -968,14 +1446,12 @@ async function handleExportPlaylist() {
   elements.exportProgressStatus.textContent = 'Creating new Spotify playlist...';
 
   try {
-    // 1. Create Playlist
     const newPlaylist = await createPlaylist(state.token, state.user.id, {
       name: playlistName,
       description: playlistDesc,
       isPublic: isPublic
     });
 
-    // 2. Batch Add Tracks
     elements.exportProgressStatus.textContent = `Adding ${trackUris.length} tracks in batches...`;
     await addTracksToPlaylist(state.token, newPlaylist.id, trackUris, (progress) => {
       elements.exportProgressStatus.textContent = `Adding tracks (${progress.added} of ${progress.total})...`;
@@ -983,37 +1459,27 @@ async function handleExportPlaylist() {
       elements.exportProgressBar.style.width = `${progress.percent}%`;
     });
 
-    // 3. Optional: Generate & Upload Retro Cover Art
     if (shouldGenCover) {
       try {
-        elements.exportProgressStatus.textContent = 'Generating & uploading retro cover art...';
-        const eraLabel = state.isAllEraSelected ? 'Vault Hits' : `${state.minYear}-${state.maxYear}`;
-        const cover = generateRetroCoverArt(playlistName, eraLabel, `${trackUris.length} Tracks Vault`);
+        elements.exportProgressStatus.textContent = 'Generating & uploading custom cover art...';
+        const eraLabel = state.isAllEraSelected ? 'Curated Vault' : `${state.minYear}-${state.maxYear}`;
+        const cover = generateRetroCoverArt(playlistName, eraLabel, `${trackUris.length} Tracks`);
         await uploadPlaylistCover(state.token, newPlaylist.id, cover.base64Data);
       } catch (coverErr) {
-        console.warn('Cover art upload note:', coverErr);
+        console.warn('Cover art upload notice:', coverErr);
       }
     }
 
-    // Close export modal
     elements.exportModal.classList.add('hidden');
-
-    // Setup success modal
     elements.createdPlaylistsLinksList.classList.add('hidden');
     elements.successSummaryText.innerHTML = `
       Successfully added <strong>${trackUris.length} tracks</strong> to your new playlist 
       <strong style="color:var(--spotify-green)">"${escapeHtml(playlistName)}"</strong>!
     `;
     elements.openInSpotifyBtn.href = newPlaylist.external_urls?.spotify || `https://open.spotify.com/playlist/${newPlaylist.id}`;
-
     elements.successModal.classList.remove('hidden');
 
-    confetti({
-      particleCount: 120,
-      spread: 70,
-      origin: { y: 0.6 }
-    });
-
+    confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
   } catch (err) {
     console.error('Export failed:', err);
     alert(`Export failed: ${err.message}`);
